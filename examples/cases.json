@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "source": "全部为人工构造的合成销售数据，仅用于功能演示；金额币种未指定。",
+  "verification_mode": "demo",
+  "cases": [
+    {
+      "id": "retail_weekly",
+      "title": "电商周报：销售额与销量排名",
+      "data_file": "retail_weekly.csv",
+      "summary": {"row_count": 21, "product_count": 3, "total_quantity": 90, "total_sales_amount": 16000},
+      "questions": [
+        {"question": "所有商品的总销售额是多少？", "tool": "get_total_sales", "expected": {"total_sales_amount": 16000}, "answer_contains": ["16000"]},
+        {"question": "哪个商品的销售额最高？", "tool": "get_top_product", "expected": {"product": "显示器", "sales_amount": 9000}, "answer_contains": ["显示器", "9000"]},
+        {"question": "按销量列出商品排名前3名", "tool": "get_product_ranking", "expected": {"metric": "quantity", "ranking": [{"product": "无线鼠标", "quantity": 60}, {"product": "机械键盘", "quantity": 20}, {"product": "显示器", "quantity": 10}]}, "answer_contains": ["无线鼠标", "60"]},
+        {"question": "按销售额列出商品排名前3名", "tool": "get_product_ranking", "expected": {"metric": "sales_amount", "ranking": [{"product": "显示器", "sales_amount": 9000}, {"product": "机械键盘", "sales_amount": 4000}, {"product": "无线鼠标", "sales_amount": 3000}]}, "answer_contains": ["显示器", "9000"]},
+        {"question": "按日期统计每天的销售额", "tool": "get_sales_by_date", "expected": {"total_sales_amount": 16000, "daily_sales": [{"date": "2026-10-19", "sales_amount": 1600}, {"date": "2026-10-20", "sales_amount": 2800}, {"date": "2026-10-21", "sales_amount": 1650}, {"date": "2026-10-22", "sales_amount": 2150}, {"date": "2026-10-23", "sales_amount": 2800}, {"date": "2026-10-24", "sales_amount": 2400}, {"date": "2026-10-25", "sales_amount": 2600}]}},
+        {"question": "画商品销售额柱状图", "tool": "create_sales_chart", "expected": {"chart_kind": "product", "displayed_points": 3}, "answer_contains": ["图表"]}
+      ]
+    },
+    {
+      "id": "promotion_review",
+      "title": "促销复盘：区间对比与加权均价",
+      "data_file": "promotion_review.csv",
+      "summary": {"row_count": 7, "product_count": 1, "total_quantity": 170, "total_sales_amount": 14600},
+      "questions": [
+        {"question": "所有商品的总销售额是多少？", "tool": "get_total_sales", "expected": {"total_sales_amount": 14600}, "answer_contains": ["14600"]},
+        {"question": "2026-10-26到2026-10-28的销售额是多少？", "tool": "get_sales_by_date", "expected": {"total_sales_amount": 3000, "daily_sales": [{"date": "2026-10-26", "sales_amount": 1000}, {"date": "2026-10-27", "sales_amount": 1000}, {"date": "2026-10-28", "sales_amount": 1000}]}, "answer_contains": ["3000"]},
+        {"question": "2026-10-29到2026-10-31的销售额是多少？", "tool": "get_sales_by_date", "expected": {"total_sales_amount": 9600, "daily_sales": [{"date": "2026-10-29", "sales_amount": 3200}, {"date": "2026-10-30", "sales_amount": 3200}, {"date": "2026-10-31", "sales_amount": 3200}]}, "answer_contains": ["9600"]},
+        {"question": "全部记录的加权成交均价是多少？", "tool": "query_metric", "expected": {"metric": "weighted_unit_price", "rows": [{"value": 85.88}]}, "answer_contains": ["85.88"]},
+        {"question": "介绍一下当前数据概况", "tool": "get_dataset_summary", "expected": {"row_count": 7, "total_quantity": 170, "total_sales_amount": 14600}, "answer_contains": ["170", "14600"]},
+        {"question": "画每日销售趋势图", "tool": "create_sales_chart", "expected": {"chart_kind": "daily", "displayed_points": 7}, "answer_contains": ["图表"]}
+      ]
+    },
+    {
+      "id": "data_boundaries",
+      "title": "数据边界：编号、并列冠军与缺失日期",
+      "data_file": "data_boundaries.csv",
+      "summary": {"row_count": 6, "product_count": 3, "total_quantity": 16, "total_sales_amount": 1000},
+      "questions": [
+        {"question": "哪个商品的销售额最高？", "tool": "get_top_product", "expected": {"sales_amount": 500, "tied_products": ["00123", "123"], "tied_count": 2, "tied_products_truncated": false}, "answer_contains": ["00123", "123", "500"]},
+        {"question": "00123 的销售额是多少？", "tool": "get_sales_for_product", "expected": {"product": "00123", "sales_amount": 500}, "answer_contains": ["00123", "500"]},
+        {"question": "2026-10-20 当天的销售额是多少？", "tool": "get_sales_by_date", "expected": {"daily_sales": [], "total_sales_amount": 0}, "answer_contains": ["没有销售记录"]},
+        {"question": "2026-10-22 当天的销售额是多少？", "tool": "get_sales_by_date", "expected": {"daily_sales": [{"date": "2026-10-22", "sales_amount": 0}], "total_sales_amount": 0}, "answer_contains": ["2026-10-22"]},
+        {"question": "Phone 的销售额是多少？", "tool": "get_sales_for_product", "expected": {"code": "product_not_found"}, "answer_contains": ["没有找到商品", "Phone"]},
+        {"question": "用只读SQL查询各商品销售额", "tool": "run_readonly_sql", "unordered_rows": true, "expected": {"columns": ["product", "total_sales"], "rows": [{"product": "00123", "total_sales": 500}, {"product": "123", "total_sales": 500}, {"product": "NA", "total_sales": 0}], "truncated": false}, "answer_contains": ["3 行"]}
+      ]
+    }
+  ]
+}

@@ -6,6 +6,18 @@ A local, explainable sales analytics agent powered by Python with DeepSeek, Open
 
 ![Workspace](docs/screenshots/workspace-v12.png)
 
+## Three reproducible examples
+
+All examples use synthetic CSV data and six copyable Chinese prompts each. They work in the offline rules demo without an API key; these checks do not establish live model accuracy.
+
+| Example | What it demonstrates | Walkthrough |
+|---|---|---|
+| Weekly retail review | Sales total 16000; revenue and unit rankings differ | [Data and steps](docs/cases/retail_weekly.md) |
+| Promotion review | Equal-length date windows; weighted unit price 85.88; daily chart | [Data and steps](docs/cases/promotion_review.md) |
+| Data boundaries | Distinct 00123/123 IDs, ties, missing dates, recorded zeros and SQL evidence | [Data and steps](docs/cases/data_boundaries.md) |
+
+Download CSVs from the [example directory](examples/README.md), create a new session for each, then upload its file. Walkthroughs and UI prompts are in Chinese. Keep original CSVs intact; spreadsheet software may strip leading zeros if you open and resave them.
+
 ## What is implemented
 
 - Eleven schema-validated tools covering sales totals, products, dates, rankings, charts, schema discovery, business metrics and read-only SQL.

@@ -4,15 +4,15 @@
 
 用自然语言查询销售数据，查看计算依据，生成图表并导出报告。项目从 CSV / Pandas 练习发展为一个带工具调用、短期对话记忆和质量校验的本地应用。
 
-**v1.1 新增：只读SQL、版本化指标口径、持久会话与历史恢复。** 学习 [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) 的执行分层和 [WrenAI](https://github.com/Canner/WrenAI) 的语义上下文思路，在明确的销售场景中独立实现。项目不包含它们的源码，也不声称拥有完整企业BI能力。
+**v1.2 新增：DeepSeek、OpenAI/Codex、Claude 与 OpenAI 兼容服务，网页选择模型，按会话记录模型来源。** 保留 v1.1 的只读SQL、指标口径与持久会话。学习 [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) 的执行分层和 [WrenAI](https://github.com/Canner/WrenAI) 的语义上下文思路，在销售场景中独立实现；不包含它们的源码。
 
-![工作台](docs/screenshots/workspace.png)
+![工作台](docs/screenshots/workspace-v12.png)
 
 ## 快速运行
 
 已有本项目虚拟环境时，在 PyCharm 打开项目，选择 `.venv/Scripts/python.exe`，右键运行 **`app.py`**，浏览器打开 **http://127.0.0.1:8765**。
 
-页面默认是**离线演示模式**：使用规则选择工具，仍由真实 Python 代码计算数据，不消耗模型调用额度。右上角切换到 **DeepSeek 实时分析** 后才会调用模型。切换模式保留当前CSV，并开始新对话。
+页面默认是**离线演示模式**：使用规则选择工具，由 Python 代码计算数据，不消耗模型调用额度。右上角选择服务商与模型 ID，点击“应用模型”或切换“大模型实时分析”。网页切换会新建会话、复制当前CSV并保留旧会话。
 
 网页会话默认保存到 `outputs/state.sqlite3`，服务重启后可以从“历史会话”恢复数据、回答与计算依据。“新建会话”保留旧会话并复制当前数据；“新对话”会清空当前会话历史。
 
@@ -31,7 +31,7 @@ python -m venv .venv
 
 也可使用 `start_datapilot.ps1`，它为本次运行设置D盘缓存。启动服务后保持该终端运行。端口被占用时，先关闭自己之前启动的实例。
 
-## DeepSeek 配置
+## 模型配置
 
 保留现有 `.env` 即可；全新安装时把 `.env.example` 复制为 `.env`，填写：
 
@@ -42,7 +42,11 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_TIMEOUT=45
 ```
 
-配置改变后重启服务。密钥只由Python读取，不发送到浏览器；源码包与Git忽略文件均排除 `.env`。模型名和接口遵循 [DeepSeek 官方文档](https://api-docs.deepseek.com/)。实时模式会把问题、必要对话历史和工具结果发给DeepSeek；原始CSV默认不整表发送。
+旧 DeepSeek 配置继续兼容。其他服务商分别填写 `OPENAI_API_KEY`、`ANTHROPIC_API_KEY` 或 `COMPATIBLE_API_KEY`，详见 [多模型配置指南](docs/models.md) 和 `.env.example`。默认服务由 `DATAPILOT_PROVIDER` 选择。
+
+修改环境配置后重启服务。密钥只由Python读取，不发送到浏览器；源码包与Git忽略文件均排除 `.env`。实时模式会把问题、必要对话历史和工具结果发给所选服务商；原始CSV默认不整表发送，但查询结果可能包含原始行。模型 ID 可编辑，实际可用性取决于你的API账户及服务商。
+
+检查结果和下一步优先级见 [v1.2 检查报告](docs/review-v1.2.md)。
 
 ## 可以做什么
 

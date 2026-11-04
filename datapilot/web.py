@@ -18,7 +18,7 @@ from .agent import AgentSession, TurnResult
 from .config import ROOT, Settings
 from .data import DataError, MAX_BYTES, load_sales
 from .demo import DemoGateway
-from .models import DeepSeekGateway, MissingKeyGateway, ModelError
+from .models import create_gateway, ModelError
 from .reports import markdown_report, summary_csv
 from .tools import ToolRegistry
 from .store import SessionStore, StorageError
@@ -27,6 +27,8 @@ from .store import SessionStore, StorageError
 class SessionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     mode: str = "demo"
+    provider: str | None = None
+    model: str | None = None
 
 
 class CreateSessionInput(SessionInput):
@@ -52,7 +54,7 @@ class Record:
 
 def create_app(settings=None):
     settings = settings or Settings.from_env()
-    app = FastAPI(title="DataPilot", version="1.1.0")
+    app = FastAPI(title="DataPilot", version="1.2.0")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver", "[::1]"])
     records, store_lock = {}, threading.RLock()
     store = SessionStore(settings.state_path) if settings.state_path else None
@@ -65,7 +67,8 @@ def create_app(settings=None):
                 payload = store.load(session_id)
                 if payload:
                     frame = load_sales(pd.DataFrame(payload["data"]))
-                    agent = new_agent(frame, payload["mode"], session_id, restored=True)
+                    agent = new_agent(frame, payload["mode"], session_id, restored=True,
+                                      provider=payload.get("provider", "deepseek"), model=payload.get("model"))
                     agent.turns = payload["history"]
                     record = Record(session_id, payload["mode"], agent, filename=payload["filename"],
                                     results=[(item["question"], TurnResult(**item["result"])) for item in payload["results"]])
@@ -98,18 +101,23 @@ def create_app(settings=None):
             with store_lock:
                 record.pins -= 1
 
-    def new_agent(frame, mode, session_id, restored=False):
+    def new_agent(frame, mode, session_id, restored=False, provider=None, model=None):
+        try:
+            selected = settings.select(provider, model)
+        except ValueError as error:
+            raise HTTPException(400, str(error)) from error
         registry = ToolRegistry(frame, settings.output_dir / session_id,
                                 f"/api/sessions/{session_id}/artifacts")
         if mode == "live":
-            gateway = MissingKeyGateway() if restored and not settings.api_key else DeepSeekGateway(settings)
+            gateway = create_gateway(selected, restored=restored)
         else:
             gateway = DemoGateway(frame["product"].unique())
-        return AgentSession(registry, gateway, settings)
+        return AgentSession(registry, gateway, selected)
 
     def persist(record):
         if store:
             store.save({"id":record.id, "mode":record.mode, "filename":record.filename,
+                        "provider":record.agent.settings.provider, "model":record.agent.settings.model,
                         "data":record.agent.registry.frame.to_dict(orient="records"),
                         "history":record.agent.turns,
                         "results":[{"question":q,"result":asdict(result)} for q,result in record.results]})
@@ -117,6 +125,7 @@ def create_app(settings=None):
     def snapshot(record):
         frame = record.agent.registry.frame
         return {"id": record.id, "mode": record.mode, "filename": record.filename,
+                "provider":record.agent.settings.provider, "model":record.agent.settings.model,
                 "summary": record.agent.registry.get_dataset_summary(),
                 "ranking": record.agent.registry.get_product_ranking(limit=5)["ranking"],
                 "columns": list(frame.columns), "preview": frame.head(12).to_dict(orient="records"),
@@ -124,7 +133,7 @@ def create_app(settings=None):
 
     @app.exception_handler(ModelError)
     async def model_error(request, error):
-        return JSONResponse(status_code=400 if error.code == "missing_key" else 502,
+        return JSONResponse(status_code=400 if error.code in ("missing_key", "invalid_config") else 502,
                             content={"detail": str(error), "code": error.code})
 
     @app.exception_handler(DataError)
@@ -138,7 +147,11 @@ def create_app(settings=None):
     @app.get("/api/health")
     def health():
         return {"status": "ok", "model": settings.model, "live_available": bool(settings.api_key),
-                "version": "1.1.0", "persistence":store is not None}
+                "provider":settings.provider, "version": "1.2.0", "persistence":store is not None}
+
+    @app.get("/api/providers")
+    def providers():
+        return {"default":settings.provider, "providers":settings.public_providers()}
 
     @app.get("/api/sessions")
     def list_sessions():
@@ -146,6 +159,7 @@ def create_app(settings=None):
             return {"sessions":store.list()}
         with store_lock:
             return {"sessions":[{"id":r.id,"mode":r.mode,"filename":r.filename,
+                                  "provider":r.agent.settings.provider,"model":r.agent.settings.model,
                                   "title":r.results[0][0][:60] if r.results else r.filename,
                                   "turn_count":len(r.results)} for r in sorted(records.values(),key=lambda r:r.touched,reverse=True)]}
 
@@ -164,7 +178,8 @@ def create_app(settings=None):
                 frame, filename = source.agent.registry.frame.copy(), source.filename
         else:
             frame, filename = load_sales(), "sales.csv"
-        record = Record(identifier, body.mode, new_agent(frame, body.mode, identifier), filename=filename)
+        record = Record(identifier, body.mode, new_agent(frame, body.mode, identifier,
+                        provider=body.provider, model=body.model), filename=filename)
         with store_lock:
             # 只清理过期的内存会话，保留所有已生成文件。
             expired = [key for key, value in records.items() if time.monotonic() - value.touched > 7200 and value.pins == 0 and not value.lock.locked()]
@@ -192,7 +207,10 @@ def create_app(settings=None):
             raise HTTPException(400, "模式应为 demo 或 live。")
         with use_record(session_id) as record:
             # 先构造成功再替换，切换失败时仍保留原数据与历史。
-            agent = new_agent(record.agent.registry.frame, body.mode, record.id)
+            agent = new_agent(record.agent.registry.frame, body.mode, record.id,
+                              provider=body.provider or record.agent.settings.provider,
+                              model=body.model if body.model is not None else
+                              (record.agent.settings.model if body.provider in (None, record.agent.settings.provider) else None))
             persist(Record(record.id,body.mode,agent,filename=record.filename))
             record.agent, record.mode = agent, body.mode
             record.results.clear()
@@ -219,7 +237,8 @@ def create_app(settings=None):
     async def replace_dataset(record, content, filename):
         # 调用方持有会话租约；先校验和持久化，再原子替换活动状态。
         frame = await run_in_threadpool(load_sales, content)
-        agent = new_agent(frame, record.mode, record.id)
+        agent = new_agent(frame, record.mode, record.id, provider=record.agent.settings.provider,
+                          model=record.agent.settings.model)
         persist(Record(record.id,record.mode,agent,filename=filename))
         record.agent = agent
         record.filename = filename

@@ -38,6 +38,7 @@ class SessionStore:
     def save(self, payload):
         question = payload["results"][0]["question"] if payload["results"] else payload["filename"]
         summary = {"id": payload["id"], "mode": payload["mode"], "filename": payload["filename"],
+                   "provider":payload.get("provider","deepseek"), "model":payload.get("model",""),
                    "title": question[:60], "turn_count": len(payload["results"]), "updated_at": time.time()}
         try:
             text = json.dumps(payload, ensure_ascii=False, allow_nan=False)

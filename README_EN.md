@@ -2,9 +2,9 @@
 
 [中文文档](README.md) · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
 
-A local, explainable sales analytics agent powered by Python and DeepSeek. Ask questions, inspect tool evidence and read-only SQL, generate charts, and export reports.
+A local, explainable sales analytics agent powered by Python with DeepSeek, OpenAI/Codex (Responses API), Claude (native Messages API), and OpenAI-compatible Chat Completions providers. Ask questions, inspect tool evidence and read-only SQL, generate charts, and export reports.
 
-![Workspace](docs/screenshots/workspace.png)
+![Workspace](docs/screenshots/workspace-v12.png)
 
 ## What is implemented
 
@@ -19,13 +19,15 @@ The design learns from DB-GPT's execution layering and WrenAI's semantic-context
 
 ## Run
 
-Use Python 3.12, create a virtual environment and install `requirements-lock.txt`. Copy `.env.example` to `.env` and optionally configure a DeepSeek API key. Run:
+Use Python 3.12, create a virtual environment and install `requirements-lock.txt`. Copy `.env.example` to `.env` and configure the desired provider's API key. Existing DeepSeek configuration remains valid. See [provider configuration](docs/models.md). Run:
 
 ```sh
 python app.py
 ```
 
 Open http://127.0.0.1:8765. Offline demo is the default and needs no model key; real model analysis is selected explicitly in the UI. Sessions are stored under `outputs/`, excluded from Git.
+
+Choose provider and model ID in the UI, then apply. Switching creates a new session that copies the dataset and preserves the old conversation. Provider and model provenance survive restarts. OpenAI access uses an API key with model permission; Codex desktop login credentials are not used. Only network protocol tests are available for providers without local credentials; do not interpret these as live model evaluations.
 
 ```sh
 python -m unittest discover -v

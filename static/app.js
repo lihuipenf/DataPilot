@@ -2,6 +2,7 @@
 const $ = (selector) => document.querySelector(selector);
 let session = null,
   health = null,
+  providers = [],
   busy = false,
   toastTimer;
 const toolNames = {
@@ -65,6 +66,9 @@ function setBusy(value) {
   $("#send").disabled = value || !session;
   $("#question").disabled = value;
   $("#mode").disabled = value;
+  $("#provider").disabled = value;
+  $("#model-id").disabled = value;
+  $("#apply-model").disabled = value;
   $("#upload-button").disabled = value;
   $("#clear-chat").disabled = value;
   $("#restore-data").disabled = value;
@@ -119,7 +123,7 @@ function renderResult(result) {
   const meta = element("div", "message-meta");
   const tokens =
     (result.usage.prompt_tokens || 0) + (result.usage.completion_tokens || 0);
-  meta.textContent = `${result.mode === "demo" ? "离线规则演示" : "DeepSeek"} · ${(result.duration_ms / 1000).toFixed(2)} s · ${result.traces.length} 次工具执行${result.mode === "live" ? ` · ${formatNumber(tokens)} tokens` : ""}`;
+  meta.textContent = `${result.mode === "demo" ? "离线规则演示" : `${result.provider || "历史模型"} / ${result.model || "未记录"}`} · ${(result.duration_ms / 1000).toFixed(2)} s · ${result.traces.length} 次工具执行${result.mode === "live" ? ` · ${formatNumber(tokens)} tokens` : ""}`;
   node.append(meta);
   if (result.traces.length) {
     const details = element("details", "trace");
@@ -207,10 +211,13 @@ function renderSession(data) {
   session = data;
   localStorage.setItem("datapilot-session", data.id);
   $("#mode").value = data.mode;
+  $("#provider").value = data.provider;
+  $("#model-id").value = data.model;
+  updateModelState();
   const live = data.mode === "live";
-  $("#mode-tag").textContent = live ? "DeepSeek" : "离线演示";
+  $("#mode-tag").textContent = live ? data.provider : "离线演示";
   $("#mode-notice").textContent = live
-    ? "DeepSeek 根据工具返回的真实结果作答；点击“分析过程”查看计算依据。"
+    ? `${data.provider} / ${data.model} 根据工具返回的结果作答；点击“分析过程”查看计算依据。问题、历史和工具结果会发送至该模型服务。`
     : "离线演示使用规则路由与真实数据计算，不调用大模型。";
   $("#filename").textContent = data.filename;
   $("#file-info").textContent =
@@ -272,20 +279,28 @@ function renderSession(data) {
     : "当前会话保存在内存";
   refreshHistory().catch(() => {});
 }
+function updateModelState() {
+  const provider = providers.find((item) => item.id === $("#provider").value);
+  $("#model-state").textContent = provider?.available
+    ? "服务端已配置密钥 · 应用模型后生效"
+    : "服务端尚未配置该服务密钥 · 可使用离线演示";
+}
 async function startSession(mode) {
   if (
     session &&
-    mode !== session.mode &&
+    (mode !== session.mode || $("#provider").value !== session.provider || $("#model-id").value.trim() !== session.model) &&
     $("#chat-log").querySelector(".message") &&
-    !confirm("切换模式将开始新对话，当前上传数据会保留。是否继续？")
+    !confirm("将用所选模型新建会话，保留当前数据和历史会话。是否继续？")
   ) {
     $("#mode").value = session.mode;
     return;
   }
   setBusy(true);
   try {
-    const path = session ? `/api/sessions/${session.id}/mode` : "/api/sessions";
-    renderSession(await post(path, { mode }));
+    renderSession(await post("/api/sessions", {
+      mode, provider: $("#provider").value,
+      model: $("#model-id").value.trim(), source_session_id: session?.id || null,
+    }));
     await refreshHistory();
   } catch (error) {
     toast(error.message);
@@ -303,7 +318,7 @@ async function refreshHistory() {
     const option = element(
       "option",
       "",
-      `${item.title || item.filename} · ${item.turn_count} 次问答`,
+      `${item.title || item.filename} · ${item.mode === "demo" ? "离线" : `${item.provider || "deepseek"} / ${item.model || "未记录"}`} · ${item.turn_count} 次问答`,
     );
     option.value = item.id;
     select.append(option);
@@ -318,6 +333,8 @@ async function newSession() {
       await post("/api/sessions", {
         mode: session?.mode || "demo",
         source_session_id: session?.id || null,
+        provider: session?.provider || $("#provider").value,
+        model: session?.model || $("#model-id").value.trim(),
       }),
     );
     await refreshHistory();
@@ -465,6 +482,11 @@ $("#drop-zone").addEventListener("drop", (event) => {
 $("#mode").addEventListener("change", (event) =>
   startSession(event.target.value),
 );
+$("#provider").addEventListener("change", () => {
+  $("#model-id").value = providers.find((item) => item.id === $("#provider").value)?.model || "";
+  updateModelState();
+});
+$("#apply-model").addEventListener("click", () => startSession($("#mode").value));
 $("#clear-chat").addEventListener("click", async () => {
   if (busy || !session) return;
   setBusy(true);
@@ -493,10 +515,16 @@ $("#restore-data").addEventListener("click", async () => {
   setBusy(true);
   try {
     health = await api("/api/health");
-    $("#model-state").textContent = health.live_available
-      ? `${health.model} · 已配置`
-      : "DeepSeek 尚未配置密钥";
-    $('#mode option[value="live"]').disabled = !health.live_available;
+    const catalog = await api("/api/providers");
+    providers = catalog.providers;
+    for (const provider of providers) {
+      const option = element("option", "", provider.label);
+      option.value = provider.id;
+      $("#provider").append(option);
+    }
+    $("#provider").value = catalog.default;
+    $("#model-id").value = providers.find((item) => item.id === catalog.default)?.model || "";
+    updateModelState();
     const saved = localStorage.getItem("datapilot-session");
     if (saved) {
       try {

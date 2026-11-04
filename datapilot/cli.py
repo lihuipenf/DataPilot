@@ -4,7 +4,7 @@ from .agent import AgentSession
 from .config import Settings
 from .data import DataError, load_sales
 from .demo import DemoGateway
-from .models import DeepSeekGateway, ModelError
+from .models import create_gateway, ModelError
 from .tools import ToolRegistry
 
 
@@ -12,16 +12,18 @@ def main():
     parser = argparse.ArgumentParser(description="DataPilot 销售分析 Agent")
     parser.add_argument("--demo", action="store_true", help="使用离线规则演示，不调用模型")
     parser.add_argument("--csv", help="销售CSV路径，默认使用项目sales.csv")
+    parser.add_argument("--provider", choices=["deepseek", "openai", "anthropic", "compatible"], help="模型服务商")
+    parser.add_argument("--model", help="服务商提供的模型 ID")
     args = parser.parse_args()
     try:
-        settings = Settings.from_env()
+        settings = Settings.from_env().select(args.provider, args.model)
         frame = load_sales(args.csv)
-        gateway = DemoGateway(frame["product"].unique()) if args.demo else DeepSeekGateway(settings)
+        gateway = DemoGateway(frame["product"].unique()) if args.demo else create_gateway(settings)
         session = AgentSession(ToolRegistry(frame, settings.output_dir / "cli"), gateway, settings)
     except (DataError, ModelError, ValueError) as error:
         print("无法启动：", error)
         return
-    print("DataPilot · " + ("离线规则演示" if args.demo else "DeepSeek 实时分析"))
+    print("DataPilot · " + ("离线规则演示" if args.demo else f"{settings.provider} / {settings.model}"))
     while True:
         try:
             question = input("\n请输入问题，输入“退出”结束：").strip()

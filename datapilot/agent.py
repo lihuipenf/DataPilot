@@ -28,6 +28,8 @@ class TurnResult:
     duration_ms: int = 0
     mode: str = "live"
     estimated_cost: float | None = None
+    provider: str = ""
+    model: str = ""
 
 
 class AgentSession:
@@ -98,5 +100,7 @@ class AgentSession:
                 cost = round((usage["prompt_tokens"] * self.settings.input_price + usage["completion_tokens"] * self.settings.output_price) / 1_000_000, 6)
             return TurnResult(answer=answer, traces=traces, artifacts=artifacts, usage=usage,
                               request_count=requests, duration_ms=round((time.perf_counter() - started) * 1000),
-                              mode=self.gateway.mode, estimated_cost=cost)
+                              mode=self.gateway.mode, estimated_cost=cost,
+                              provider=self.settings.provider if self.gateway.mode == "live" else "",
+                              model=self.settings.model if self.gateway.mode == "live" else "")
         raise ModelError("tool_limit", "分析达到步骤上限，请拆分问题后重试。")

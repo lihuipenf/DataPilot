@@ -1,0 +1,16 @@
+{
+  "mode": "live",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "cases_file": "cases.json",
+  "cases": 3,
+  "passed": 3,
+  "tool_passed": 3,
+  "answer_passed": 3,
+  "median_latency_ms": 2099,
+  "prompt_tokens": 10257,
+  "completion_tokens": 197,
+  "baseline_cases": 0,
+  "baseline_passed": 0,
+  "failures": []
+}

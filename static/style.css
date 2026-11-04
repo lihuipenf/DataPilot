@@ -285,6 +285,8 @@ main {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 27px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 .eyebrow {
   font-size: 9px;
@@ -308,25 +310,32 @@ h1 {
   margin: 0;
 }
 .mode-control {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: auto minmax(170px, 240px) auto;
+  align-items: center;
+  gap: 8px 10px;
 }
 .mode-control label {
   font-size: 9px;
   color: var(--muted);
 }
-.mode-control select {
+.mode-control select,
+.mode-control input {
   border: 1px solid #dfe8e2;
   border-radius: 7px;
   background: white;
   color: #3c6450;
   padding: 8px 10px;
   font-size: 11px;
-  max-width: 200px;
+  width: 100%;
+  min-width: 0;
+  max-width: 240px;
 }
+.mode-control label { grid-column: 1; }
+.mode-control select, .mode-control input { grid-column: 2; }
+.mode-control #apply-model { grid-column: 3; grid-row: 3; }
 .mode-control > span {
+  grid-column: 1 / -1;
   font-size: 9px;
   color: #8da196;
 }
@@ -1022,10 +1031,11 @@ tr:last-child td {
     font-size: 10px;
     line-height: 1.8;
   }
-  .mode-control select {
+  .mode-control select, .mode-control input {
     font-size: 10px;
-    max-width: 135px;
+    max-width: 100%;
   }
+  .mode-control { width: 100%; grid-template-columns: auto minmax(0, 1fr) auto; }
   .metrics {
     grid-template-columns: 1fr 1fr;
     gap: 10px;

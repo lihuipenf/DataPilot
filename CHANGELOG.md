@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-11-04
+
+- 新增模型服务抽象：DeepSeek、OpenAI Responses（含可访问的 Codex 模型）、Claude 原生 Messages、OpenAI兼容 Chat Completions。
+- 网页与命令行选择模型，服务商凭据隔离；保留旧DeepSeek配置。
+- 持久化模型来源并恢复，Responses保留推理项与phase，Claude支持并行工具结果及禁用后续工具调用。
+- 修正界面/报告固定DeepSeek标签、过时的内存说明和跨模型费用单价继承；发布扫描覆盖所有API密钥。
+- 新增模型协议、配置、重启恢复和发布扫描回归；模型配置及改进检查文档。
+
 ## 1.1.0 — 2026-11-04
 
 - 新增受限只读SQLite SQL工具：授权回调、函数白名单、参数绑定、时间与返回行数限制。

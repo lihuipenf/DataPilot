@@ -32,9 +32,10 @@ def answer_ok(text, case):
     return all(term.casefold() in normalized for term in case.get("terms", []))
 
 
-def run(mode="demo", baseline=False, max_cases=26):
+def run(mode="demo", baseline=False, max_cases=26, cases_path=None):
     settings, frame = Settings.from_env(), load_sales()
-    cases = json.loads((ROOT / "evals" / "cases.json").read_text(encoding="utf-8"))[:max_cases]
+    case_file = Path(cases_path) if cases_path else ROOT / "evals" / "cases.json"
+    cases = json.loads(case_file.read_text(encoding="utf-8"))[:max_cases]
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     folder = settings.output_dir / "evaluations" / (mode + "-" + stamp)
     folder.mkdir(parents=True, exist_ok=True)
@@ -78,7 +79,7 @@ def run(mode="demo", baseline=False, max_cases=26):
         # 每完成一题就保留结果，网络中断也不会丢失已测记录。
         (folder / "results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
     baseline_rows = [row["baseline"] for row in rows if "baseline" in row]
-    summary = {"mode": mode, "model": settings.model if mode == "live" else "规则演示（非LLM）", "cases": len(rows),
+    summary = {"mode": mode, "model": settings.model if mode == "live" else "规则演示（非LLM）", "cases_file":case_file.name,"cases": len(rows),
                "passed": sum(bool(row["success"]) for row in rows),
                "tool_passed": sum(bool(row["tool_success"]) for row in rows),
                "answer_passed": sum(bool(row["answer_success"]) for row in rows),
@@ -112,5 +113,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["demo", "live"], default="demo")
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument("--max-cases", type=int, default=26)
+    parser.add_argument("--cases", help="自定义题集JSON路径")
     args = parser.parse_args()
-    run(args.mode, args.baseline, args.max_cases)
+    run(args.mode, args.baseline, args.max_cases, args.cases)

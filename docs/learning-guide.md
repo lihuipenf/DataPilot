@@ -43,3 +43,17 @@ Pydantic同时负责生成给模型的JSON Schema和检查模型返回的参数�
 `tests/test_core.py` 用脚本化模型响应检查控制流程，实际Pandas计算和PNG生成不替换。`evals/run_eval.py --mode live` 才会真实调用模型。二者验证不同层面，不能互相冒充。
 
 面试时应能回答：为什么要有工具ID、为什么不能直接执行模型给出的函数字符串、为什么要按完整轮次裁剪历史、为什么单次回答正确不代表系统可靠。
+
+## 8. 学习成熟数据产品的两个核心抽象
+
+先读 `semantic/metrics.json`：为什么“销售额”“销量”“加权成交均价”需要明确定义？再读 `semantic.py`，观察它如何把已批准的表达式和维度变成参数化SQL。
+
+再读 `sql.py` 的 `_authorize()` 与 `query()`。验证 `SELECT` 如何通过，`DELETE`、`ATTACH`、`load_extension`如何被拒绝。不要把字符串检查当作完整SQL安全边界；真正的授权发生在SQLite编译执行层。
+
+## 9. 跟踪会话如何跨重启恢复
+
+读 `store.py` 的 `save()`、`load()`，再看Web层的 `persist()` 和 `get_record()`。数据库里保存的是业务数据与消息，不是模型客户端或密钥。试着重启服务，恢复历史会话，检查SQL依据和上传文件名称是否一致。
+
+## 10. 理解发布流水线
+
+阅读 `.github/workflows/ci.yml`，区分单元测试、离线评测、容器冒烟测试和真实模型评测。CI不需要模型密钥，也不会把离线演示成绩当成LLM效果。

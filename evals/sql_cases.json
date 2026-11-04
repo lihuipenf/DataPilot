@@ -1,0 +1,10 @@
+[
+  {"id":"schema","question":"读取当前sales表的字段契约和类型。","tool":"get_data_schema","expected":{"table":"sales","dialect":"SQLite"},"terms":["sales"]},
+  {"id":"weighted-metric","question":"请使用业务指标 weighted_unit_price 查询当前全部数据的加权成交均价。","tool":"query_metric","expected":{"metric":"weighted_unit_price","rows":[{"value":150}]},"terms":["150"]},
+  {"id":"metric-date","question":"使用已定义的 sales_amount 指标，按date分组查询每天销售额。","tool":"query_metric","expected":{"metric":"sales_amount","rows":[{"date":"2026-11-01","value":350},{"date":"2026-11-02","value":1000}]},"terms":["350","1000"]},
+  {"id":"sql-total","question":"用只读SQL查询sales所有记录的总销售额，结果列请命名为total。","tool":"run_readonly_sql","expected":{"rows":[{"total":1350}]},"terms":["1350"]},
+  {"id":"sql-products","question":"请使用只读SQL，按product分组计算SUM(sales_amount)，结果列为product和total，按total降序展示所有商品。","tool":"run_readonly_sql","expected":{"rows":[{"product":"Monitor","total":800},{"product":"Keyboard","total":300},{"product":"Mouse","total":250}]},"terms":["800","300","250"]},
+  {"id":"sql-date-filter","question":"用只读SQL查询2026-11-01当天SUM(sales_amount)，结果列命名total。","tool":"run_readonly_sql","expected":{"rows":[{"total":350}]},"terms":["350"]},
+  {"id":"sql-row-count","question":"用只读SQL查询sales的COUNT(*)，结果列命名record_count。","tool":"run_readonly_sql","expected":{"rows":[{"record_count":5}]},"terms":["5"]},
+  {"id":"sql-having","question":"请用只读SQL按product分组，查询SUM(sales_amount)>250的商品，输出列product和total，按total降序。","tool":"run_readonly_sql","expected":{"rows":[{"product":"Monitor","total":800},{"product":"Keyboard","total":300}]},"terms":["Monitor","Keyboard"]}
+]

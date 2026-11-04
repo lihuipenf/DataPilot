@@ -1,0 +1,15 @@
+services:
+  datapilot:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    env_file:
+      - .env
+    environment:
+      DATAPILOT_OUTPUT_DIR: /app/outputs
+      DATAPILOT_STATE_PATH: /app/outputs/state.sqlite3
+    volumes:
+      - datapilot-data:/app/outputs
+    restart: unless-stopped
+volumes:
+  datapilot-data:

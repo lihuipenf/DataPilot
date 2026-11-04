@@ -1,0 +1,908 @@
+[
+  {
+    "id": "total-1",
+    "question": "所有商品的总销售额是多少？",
+    "mode": "live",
+    "answer": "所有商品的总销售额为 **1350**（数据中未提供币种单位）。",
+    "traces": [
+      {
+        "name": "get_total_sales",
+        "arguments": {},
+        "result": {
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 0
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3386,
+      "completion_tokens": 41
+    },
+    "request_count": 2,
+    "duration_ms": 2009,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "total-2",
+    "question": "销售额总和是多少？",
+    "mode": "live",
+    "answer": "当前数据中所有商品、所有日期的销售额总和为 **1350**（数据未提供币种）。",
+    "traces": [
+      {
+        "name": "get_total_sales",
+        "arguments": {},
+        "result": {
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 0
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3382,
+      "completion_tokens": 46
+    },
+    "request_count": 2,
+    "duration_ms": 2005,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "total-3",
+    "question": "这些记录一共卖了多少销售额？",
+    "mode": "live",
+    "answer": "当前数据中所有商品、所有日期的销售额合计为 **1350**（币种未提供）。",
+    "traces": [
+      {
+        "name": "get_total_sales",
+        "arguments": {},
+        "result": {
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 0
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3388,
+      "completion_tokens": 45
+    },
+    "request_count": 2,
+    "duration_ms": 2046,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "top-1",
+    "question": "哪个商品的销售额最高？",
+    "mode": "live",
+    "answer": "销售额最高的商品是 **Monitor**，累计销售额为 800。",
+    "traces": [
+      {
+        "name": "get_top_product",
+        "arguments": {},
+        "result": {
+          "product": "Monitor",
+          "sales_amount": 800
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3386,
+      "completion_tokens": 36
+    },
+    "request_count": 2,
+    "duration_ms": 2026,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "top-2",
+    "question": "请查销售额最高的商品及其金额",
+    "mode": "live",
+    "answer": "销售额最高的商品是 **Monitor**，累计销售额为 **800**（币种未提供）。",
+    "traces": [
+      {
+        "name": "get_top_product",
+        "arguments": {},
+        "result": {
+          "product": "Monitor",
+          "sales_amount": 800
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3390,
+      "completion_tokens": 42
+    },
+    "request_count": 2,
+    "duration_ms": 2285,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "keyboard",
+    "question": "Keyboard 的销售额是多少？",
+    "mode": "live",
+    "answer": "Keyboard 的累计销售额为 300。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Keyboard"
+        },
+        "result": {
+          "product": "Keyboard",
+          "sales_amount": 300
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3407,
+      "completion_tokens": 50
+    },
+    "request_count": 2,
+    "duration_ms": 1800,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "mouse",
+    "question": "Mouse 的销售额是多少？",
+    "mode": "live",
+    "answer": "Mouse 的累计销售额为 250（币种未提供）。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Mouse"
+        },
+        "result": {
+          "product": "Mouse",
+          "sales_amount": 250
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3414,
+      "completion_tokens": 62
+    },
+    "request_count": 2,
+    "duration_ms": 1870,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "monitor",
+    "question": "Monitor 的销售额是多少？",
+    "mode": "live",
+    "answer": "Monitor 的累计销售额是 800（币种未提供）。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Monitor"
+        },
+        "result": {
+          "product": "Monitor",
+          "sales_amount": 800
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3407,
+      "completion_tokens": 55
+    },
+    "request_count": 2,
+    "duration_ms": 1537,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "case-insensitive",
+    "question": "keyboard 的销售额是多少？",
+    "mode": "live",
+    "answer": "Keyboard 的累计销售额为 300（数据中未提供币种）。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Keyboard"
+        },
+        "result": {
+          "product": "Keyboard",
+          "sales_amount": 300
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3409,
+      "completion_tokens": 57
+    },
+    "request_count": 2,
+    "duration_ms": 1629,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "missing-product",
+    "question": "Phone 的销售额是多少？",
+    "mode": "live",
+    "answer": "数据中没有名为 \"Phone\" 的商品，因此无法给出销售额。\n\n需要的话我可以帮你查看销售额排名靠前的商品，确认真实名称后再查询。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Phone"
+        },
+        "result": {
+          "error": "没有找到商品：Phone",
+          "code": "product_not_found"
+        },
+        "success": false,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3414,
+      "completion_tokens": 73
+    },
+    "request_count": 2,
+    "duration_ms": 1937,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "daily-all",
+    "question": "按日期统计每天的销售额",
+    "mode": "live",
+    "answer": "按日期统计的每日销售额：\n\n| 日期 | 销售额 |\n|---|---|\n| 2026-11-01 | 350 |\n| 2026-11-02 | 1000 |\n| 合计 | 1350 |\n\n数据中只有这两天有销售记录。",
+    "traces": [
+      {
+        "name": "get_sales_by_date",
+        "arguments": {},
+        "result": {
+          "daily_sales": [
+            {
+              "date": "2026-11-01",
+              "sales_amount": 350
+            },
+            {
+              "date": "2026-11-02",
+              "sales_amount": 1000
+            }
+          ],
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3429,
+      "completion_tokens": 81
+    },
+    "request_count": 2,
+    "duration_ms": 1964,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "daily-day1",
+    "question": "2026-11-01 当天的销售额是多少？",
+    "mode": "live",
+    "answer": "2026-11-01 当天销售额为 **350**（数据未提供币种）。",
+    "traces": [
+      {
+        "name": "get_sales_by_date",
+        "arguments": {
+          "start_date": "2026-11-01",
+          "end_date": "2026-11-01"
+        },
+        "result": {
+          "daily_sales": [
+            {
+              "date": "2026-11-01",
+              "sales_amount": 350
+            }
+          ],
+          "total_sales_amount": 350
+        },
+        "success": true,
+        "duration_ms": 3
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3467,
+      "completion_tokens": 88
+    },
+    "request_count": 2,
+    "duration_ms": 2070,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "daily-day2",
+    "question": "2026-11-02 当天的销售额是多少？",
+    "mode": "live",
+    "answer": "2026-11-02 当天的销售额是 1000（工具未标明币种）。",
+    "traces": [
+      {
+        "name": "get_sales_by_date",
+        "arguments": {
+          "start_date": "2026-11-02",
+          "end_date": "2026-11-02"
+        },
+        "result": {
+          "daily_sales": [
+            {
+              "date": "2026-11-02",
+              "sales_amount": 1000
+            }
+          ],
+          "total_sales_amount": 1000
+        },
+        "success": true,
+        "duration_ms": 3
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3469,
+      "completion_tokens": 89
+    },
+    "request_count": 2,
+    "duration_ms": 1895,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "daily-range",
+    "question": "统计2026-11-01到2026-11-02的销售额",
+    "mode": "live",
+    "answer": "2026-11-01 至 2026-11-02 的销售额合计为 1350。\n\n- 2026-11-01：350\n- 2026-11-02：1000\n\n（数据未标注币种。）",
+    "traces": [
+      {
+        "name": "get_sales_by_date",
+        "arguments": {
+          "start_date": "2026-11-01",
+          "end_date": "2026-11-02"
+        },
+        "result": {
+          "daily_sales": [
+            {
+              "date": "2026-11-01",
+              "sales_amount": 350
+            },
+            {
+              "date": "2026-11-02",
+              "sales_amount": 1000
+            }
+          ],
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3495,
+      "completion_tokens": 122
+    },
+    "request_count": 2,
+    "duration_ms": 2118,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "daily-empty",
+    "question": "2027-01-01 当天销售额是多少？",
+    "mode": "live",
+    "answer": "2027-01-01 当天没有销售记录，销售额为 0（该日期不在数据覆盖范围内，或当天无成交记录）。\n\n如需确认数据实际覆盖的日期范围，我可以再查一下数据概况。",
+    "traces": [
+      {
+        "name": "get_sales_by_date",
+        "arguments": {
+          "start_date": "2027-01-01",
+          "end_date": "2027-01-01"
+        },
+        "result": {
+          "daily_sales": [],
+          "total_sales_amount": 0
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3446,
+      "completion_tokens": 114
+    },
+    "request_count": 2,
+    "duration_ms": 2158,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "rank-sales",
+    "question": "按销售额列出商品排名前3名",
+    "mode": "live",
+    "answer": "按销售额排名前 3 的商品是：\n\n| 排名 | 商品 | 销售额 |\n|---|---|---|\n| 1 | Monitor | 800 |\n| 2 | Keyboard | 300 |\n| 3 | Mouse | 250 |\n\n数据未标明币种，因此这里只列数值。",
+    "traces": [
+      {
+        "name": "get_product_ranking",
+        "arguments": {
+          "limit": 3,
+          "metric": "sales_amount"
+        },
+        "result": {
+          "metric": "sales_amount",
+          "ranking": [
+            {
+              "product": "Monitor",
+              "sales_amount": 800
+            },
+            {
+              "product": "Keyboard",
+              "sales_amount": 300
+            },
+            {
+              "product": "Mouse",
+              "sales_amount": 250
+            }
+          ]
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3464,
+      "completion_tokens": 118
+    },
+    "request_count": 2,
+    "duration_ms": 2713,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "rank-two",
+    "question": "按销售额列出前2名商品排名",
+    "mode": "live",
+    "answer": "按销售额排名前 2 的商品：\n\n| 排名 | 商品 | 销售额 |\n|---|---|---|\n| 1 | Monitor | 800 |\n| 2 | Keyboard | 300 |\n\nMonitor 销售额最高，比 Keyboard 多 500。（数据未提供币种）",
+    "traces": [
+      {
+        "name": "get_product_ranking",
+        "arguments": {
+          "limit": 2,
+          "metric": "sales_amount"
+        },
+        "result": {
+          "metric": "sales_amount",
+          "ranking": [
+            {
+              "product": "Monitor",
+              "sales_amount": 800
+            },
+            {
+              "product": "Keyboard",
+              "sales_amount": 300
+            }
+          ]
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3451,
+      "completion_tokens": 114
+    },
+    "request_count": 2,
+    "duration_ms": 2324,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "rank-quantity",
+    "question": "按销量给商品排名",
+    "mode": "live",
+    "answer": "按销量排名（前 10 名，实际只有 3 个商品有记录）：\n\n| 排名 | 商品 | 销量 |\n|---|---|---|\n| 1 | Mouse | 5 |\n| 2 | Keyboard | 3 |\n| 3 | Monitor | 1 |\n\nMouse 的销量最高。如需按销售额排名或查看某商品的明细，请告诉我。",
+    "traces": [
+      {
+        "name": "get_product_ranking",
+        "arguments": {
+          "metric": "quantity",
+          "limit": 10
+        },
+        "result": {
+          "metric": "quantity",
+          "ranking": [
+            {
+              "product": "Mouse",
+              "quantity": 5
+            },
+            {
+              "product": "Keyboard",
+              "quantity": 3
+            },
+            {
+              "product": "Monitor",
+              "quantity": 1
+            }
+          ]
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3453,
+      "completion_tokens": 134
+    },
+    "request_count": 2,
+    "duration_ms": 1970,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "summary",
+    "question": "介绍一下当前数据概况",
+    "mode": "live",
+    "answer": "当前数据概况如下：\n\n- **记录数**：5 条（注意：这是销售记录数，不是订单数）\n- **商品数**：3 个\n- **总销量**：9\n- **总销售额**：1350（币种未指定）\n- **日期范围**：2026-11-01 至 2026-11-02（仅 2 天）\n- **销售额最高商品**：Monitor\n\n数据规模很小，只有 5 条记录、2 天跨度，做趋势判断的意义有限。需要看某个商品的明细或每日分布可以继续告诉我。",
+    "traces": [
+      {
+        "name": "get_dataset_summary",
+        "arguments": {},
+        "result": {
+          "row_count": 5,
+          "product_count": 3,
+          "total_quantity": 9,
+          "total_sales_amount": 1350,
+          "date_min": "2026-11-01",
+          "date_max": "2026-11-02",
+          "top_product": "Monitor",
+          "currency": "未指定"
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3443,
+      "completion_tokens": 152
+    },
+    "request_count": 2,
+    "duration_ms": 2278,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "row-count",
+    "question": "数据一共有多少条销售记录？",
+    "mode": "live",
+    "answer": "当前数据共有 **5 条销售记录**，涉及 3 个商品，日期范围是 2026-11-01 至 2026-11-02（无订单ID，记录数不等于订单数）。",
+    "traces": [
+      {
+        "name": "get_dataset_summary",
+        "arguments": {},
+        "result": {
+          "row_count": 5,
+          "product_count": 3,
+          "total_quantity": 9,
+          "total_sales_amount": 1350,
+          "date_min": "2026-11-01",
+          "date_max": "2026-11-02",
+          "top_product": "Monitor",
+          "currency": "未指定"
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3449,
+      "completion_tokens": 71
+    },
+    "request_count": 2,
+    "duration_ms": 2007,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "quantity",
+    "question": "所有商品的总销量是多少？",
+    "mode": "live",
+    "answer": "所有商品的总销量是 **9**（共 3 种商品、5 条销售记录，日期范围为 2026-11-01 至 2026-11-02）。",
+    "traces": [
+      {
+        "name": "get_dataset_summary",
+        "arguments": {},
+        "result": {
+          "row_count": 5,
+          "product_count": 3,
+          "total_quantity": 9,
+          "total_sales_amount": 1350,
+          "date_min": "2026-11-01",
+          "date_max": "2026-11-02",
+          "top_product": "Monitor",
+          "currency": "未指定"
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3447,
+      "completion_tokens": 64
+    },
+    "request_count": 2,
+    "duration_ms": 1948,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "chart-product",
+    "question": "画商品销售额柱状图",
+    "mode": "live",
+    "answer": "已生成商品销售额柱状图，共展示 3 个商品：\n\n- 图表文件：`6b0f53430e214151ac28546eb278e7c9.png`\n- 下载地址：/api/artifacts/6b0f53430e214151ac28546eb278e7c9.png\n\n如需具体排名数值或按销量排序的图表，可以继续告诉我。",
+    "traces": [
+      {
+        "name": "create_sales_chart",
+        "arguments": {
+          "kind": "product"
+        },
+        "result": {
+          "chart_kind": "product",
+          "artifact": {
+            "id": "6b0f53430e214151ac28546eb278e7c9.png",
+            "kind": "chart",
+            "mime_type": "image/png",
+            "url": "/api/artifacts/6b0f53430e214151ac28546eb278e7c9.png"
+          },
+          "displayed_points": 3
+        },
+        "success": true,
+        "duration_ms": 311
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "6b0f53430e214151ac28546eb278e7c9.png",
+        "kind": "chart",
+        "mime_type": "image/png",
+        "url": "/api/artifacts/6b0f53430e214151ac28546eb278e7c9.png"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 3482,
+      "completion_tokens": 129
+    },
+    "request_count": 2,
+    "duration_ms": 2191,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "chart-daily",
+    "question": "画每日销售趋势图",
+    "mode": "live",
+    "answer": "每日销售趋势图已生成，可下载：`/api/artifacts/e57c5356f69c47aea2053e4e1032ff4d.png`\n\n需要说明：图片中只包含 2 个数据点，说明当前数据中只有 2 个有销售记录的日期，趋势参考意义有限。如果你需要，我可以补充查询具体日期与每日销售额，或改为商品维度柱状图。",
+    "traces": [
+      {
+        "name": "create_sales_chart",
+        "arguments": {
+          "kind": "daily"
+        },
+        "result": {
+          "chart_kind": "daily",
+          "artifact": {
+            "id": "e57c5356f69c47aea2053e4e1032ff4d.png",
+            "kind": "chart",
+            "mime_type": "image/png",
+            "url": "/api/artifacts/e57c5356f69c47aea2053e4e1032ff4d.png"
+          },
+          "displayed_points": 2
+        },
+        "success": true,
+        "duration_ms": 75
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "e57c5356f69c47aea2053e4e1032ff4d.png",
+        "kind": "chart",
+        "mime_type": "image/png",
+        "url": "/api/artifacts/e57c5356f69c47aea2053e4e1032ff4d.png"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 3490,
+      "completion_tokens": 139
+    },
+    "request_count": 2,
+    "duration_ms": 2236,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "multi-tool",
+    "question": "查询总销售额和销售额最高的商品",
+    "mode": "live",
+    "answer": "- 总销售额：1350\n- 销售额最高的商品：Monitor，销售额 800（占总销售额约 59%）\n\n（数据未提供币种，故不标注单位。）",
+    "traces": [
+      {
+        "name": "get_total_sales",
+        "arguments": {},
+        "result": {
+          "total_sales_amount": 1350
+        },
+        "success": true,
+        "duration_ms": 0
+      },
+      {
+        "name": "get_top_product",
+        "arguments": {},
+        "result": {
+          "product": "Monitor",
+          "sales_amount": 800
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3421,
+      "completion_tokens": 75
+    },
+    "request_count": 2,
+    "duration_ms": 1951,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "followup-first",
+    "question": "Keyboard 的销售额是多少？",
+    "mode": "live",
+    "answer": "Keyboard 的累计销售额为 300（数据未提供币种）。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Keyboard"
+        },
+        "result": {
+          "product": "Keyboard",
+          "sales_amount": 300
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3407,
+      "completion_tokens": 56
+    },
+    "request_count": 2,
+    "duration_ms": 2027,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "followup-next",
+    "question": "那 Mouse 呢？",
+    "mode": "live",
+    "answer": "Mouse 的累计销售额为 250（数据未提供币种）。",
+    "traces": [
+      {
+        "name": "get_sales_for_product",
+        "arguments": {
+          "product_name": "Mouse"
+        },
+        "result": {
+          "product": "Mouse",
+          "sales_amount": 250
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3585,
+      "completion_tokens": 56
+    },
+    "request_count": 2,
+    "duration_ms": 1866,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  }
+]

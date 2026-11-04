@@ -23,7 +23,16 @@ class DemoGateway:
         calls = []
         def call(name, args=None):
             calls.append(ToolCall(uuid4().hex, name, json.dumps(args or {}, ensure_ascii=False)))
-        if any(word in question for word in ["画", "绘", "图表", "柱状图", "折线图"]):
+        if "sql" in question.lower():
+            # 演示模式支持固定只读示例，不假装能自由生成SQL。
+            call("run_readonly_sql", {"sql":"SELECT product, ROUND(SUM(sales_amount), 2) AS total_sales FROM sales GROUP BY product ORDER BY total_sales DESC"})
+        elif any(word in question for word in ["口径", "指标定义"]):
+            call("get_business_metrics")
+        elif any(word in question for word in ["加权", "均价"]):
+            call("query_metric", {"metric":"weighted_unit_price"})
+        elif any(word in question for word in ["字段", "表结构"]):
+            call("get_data_schema")
+        elif any(word in question for word in ["画", "绘", "图表", "柱状图", "折线图"]):
             call("create_sales_chart", {"kind": "daily" if any(w in question for w in ["每日", "趋势", "日期", "折线"]) else "product"})
         elif any(word in question for word in ["概况", "多少条", "多少种", "数据范围", "总销量"]):
             call("get_dataset_summary")
@@ -54,6 +63,15 @@ class DemoGateway:
     def _answer(result):
         if "error" in result:
             return "查询未完成：" + result["error"]
+        if "metrics" in result:
+            return "指标口径（版本" + result["version"] + "）：\n" + "\n".join(m["label"] + "：" + m["description"] for m in result["metrics"])
+        if "dialect" in result:
+            return "当前数据表为 sales，字段有：" + "、".join(c["name"] for c in result["columns"]) + "。SQL方言为SQLite。"
+        if "sql" in result:
+            if result.get("metric") == "weighted_unit_price":
+                value = result["rows"][0]["value"] if result["rows"] else None
+                return "按总销售额除以总销量计算，加权成交均价为 " + str(value) + "。币种未指定。"
+            return "只读查询已完成，返回 " + str(result["row_count"]) + " 行。详细SQL与结果表格见下方查询依据。"
         if "artifact" in result:
             return "销售图表已生成，可在下方查看或下载 PNG。图中最多显示前20名商品或最近366个有记录日期。"
         if "row_count" in result:

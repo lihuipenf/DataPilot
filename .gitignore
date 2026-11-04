@@ -16,3 +16,10 @@ __pycache__/
 outputs/
 .pytest_cache/
 dist/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db

@@ -33,6 +33,17 @@ class ChartArgs(NoArgs):
     kind: Literal["product", "daily"] = "product"
 
 
+class SqlArgs(NoArgs):
+    sql: str = Field(min_length=1, max_length=6000)
+    parameters: list[str | int | float | None] = Field(default_factory=list, max_length=20)
+    limit: int = Field(default=100, strict=True, ge=1, le=200)
+
+
+class MetricArgs(DateArgs):
+    metric: str = Field(min_length=1, max_length=60)
+    group_by: Literal["product", "date"] | None = None
+
+
 SPECS = {
     "get_total_sales": (NoArgs, "计算当前数据中所有商品、所有日期的销售额总和。"),
     "get_top_product": (NoArgs, "查询累计销售额最高的商品；并列时返回数量及最多20个商品名称，并标明是否截断。"),
@@ -41,6 +52,10 @@ SPECS = {
     "get_product_ranking": (RankArgs, "商品排名，可按销售额 sales_amount 或销量 quantity，limit指定前几名。"),
     "get_dataset_summary": (NoArgs, "查询数据概况：记录数、商品数、总销量、总销售额、日期范围。"),
     "create_sales_chart": (ChartArgs, "绘制销售额图表并生成可下载PNG。product为商品柱状图，daily为每日趋势图。"),
+    "get_data_schema": (NoArgs, "查询当前sales表字段、类型与业务含义。在编写SQL前使用。"),
+    "get_business_metrics": (NoArgs, "查询销售额、销量、加权均价等指标的统一定义与假设，避免混淆指标。"),
+    "query_metric": (MetricArgs, "按已批准的业务指标定义查询，可按商品或日期分组、限定日期。先查看指标定义。"),
+    "run_readonly_sql": (SqlArgs, "对当前sales表执行单条只读SQLite SELECT或WITH查询。禁止写入、外部文件和未授权函数；最多200行，1秒超时。"),
 }
 
 
@@ -49,6 +64,34 @@ class ToolRegistry:
         self.frame = frame
         self.output_dir = Path(output_dir)
         self.artifact_prefix = artifact_prefix
+        self._sql = None
+
+    @property
+    def sql_engine(self):
+        if self._sql is None:
+            from .sql import ReadOnlySql
+            self._sql = ReadOnlySql(self.frame)
+        return self._sql
+
+    def get_data_schema(self):
+        return {"table": "sales", "dialect": "SQLite", "columns": [
+            {"name":"date", "type":"TEXT", "meaning":"销售日期，YYYY-MM-DD"},
+            {"name":"product", "type":"TEXT", "meaning":"商品原始名称"},
+            {"name":"quantity", "type":"INTEGER", "meaning":"本条记录的销售数量"},
+            {"name":"unit_price", "type":"REAL", "meaning":"单价，币种未指定"},
+            {"name":"sales_amount", "type":"REAL", "meaning":"quantity乘unit_price，程序重算"}],
+            "row_count": len(self.frame)}
+
+    def get_business_metrics(self):
+        from .semantic import MetricCatalog
+        return MetricCatalog().describe()
+
+    def query_metric(self, metric, group_by=None, start_date=None, end_date=None):
+        from .semantic import MetricCatalog
+        return MetricCatalog().query(self.sql_engine, metric, group_by, start_date, end_date)
+
+    def run_readonly_sql(self, sql, parameters=None, limit=100):
+        return self.sql_engine.query(sql, parameters, limit)
 
     def schemas(self):
         return [{"type": "function", "function": {"name": name, "description": description,
@@ -137,7 +180,7 @@ class ToolRegistry:
             FigureCanvasAgg(fig)
             ax = fig.subplots()
             installed = {font.name for font in font_manager.fontManager.ttflist}
-            font = next((f for f in ["Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "DejaVu Sans"] if f in installed), "DejaVu Sans")
+            font = next((f for f in ["Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "Noto Sans CJK JP", "DejaVu Sans"] if f in installed), "DejaVu Sans")
             if kind == "product":
                 values = self.product_sales().sort_values(ascending=False).head(20)
                 ax.bar(values.index, values.values, color="#127b68", width=0.6)

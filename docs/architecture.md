@@ -7,8 +7,12 @@ flowchart LR
     Model -->|工具调用请求| Registry[白名单与Pydantic校验]
     Registry --> Data[Pandas计算]
     Registry --> Chart[Agg生成PNG]
+    Registry --> SQL[独立内存SQLite只读查询]
+    Metrics[版本化指标契约] --> Registry
     Data -->|结构化证据| Session
     Chart -->|图表产物| Session
+    SQL -->|SQL及结果表格| Session
+    Session --> Store[SQLite持久会话]
     Session -->|继续分析或最终回答| Model
     Session --> UI
     UI --> Export[Markdown / CSV / PNG导出]
@@ -32,7 +36,11 @@ flowchart LR
 
 **界面层**不保存密钥。通过textContent等安全DOM接口显示用户输入和模型文字；图表仅来自当前会话生成的合法PNG名称。切换模式保留数据，开始新对话；坏CSV替换是原子的。
 
-**存储层**使用进程内会话；服务重启后会话丢失，生成文件保留在outputs。没有数据库或公网账户系统，适合本地演示。将来若做多人部署，需要身份认证、持久存储、独立任务队列和跨进程锁。
+**存储层**在v1.1中使用SQLite持久会话，保存数据、完整轮次、问答与执行证据；服务重启后按会话ID恢复。缓存最多32个活跃会话，旧状态保留在数据库。保存失败时不提交新的对话状态。命令行仍使用内存会话。多人部署仍需要身份认证、独立任务队列和跨进程会话协调。
+
+**语义层**读取 `semantic/metrics.json`。定义版本、表达式、单位与数据假设进入Git审查；`query_metric`只允许已知指标、product/date维度和绑定的日期参数。均价采用加权口径；数据缺少订单ID，不能声称计算真实客单价。
+
+**SQL层**将当前数据装载到独立内存库，不暴露持久会话数据库。SQLite授权回调拒绝写操作、系统表、外部附加库和未授权函数；执行单条语句，限制SQL长度、结果行数、字段长度和运行期限。错误以结构化信息返回模型，允许有界修正。SQL工具不是任意代码执行器。
 
 ## 关键取舍
 

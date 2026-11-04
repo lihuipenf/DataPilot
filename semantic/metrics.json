@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "table": "sales",
+  "assumptions": [
+    "一行代表一条销售记录，不等于独立订单；数据中没有订单ID。",
+    "币种未指定；金额口径不包括税费、退款或汇率转换。",
+    "数量为非负整数；单价非负；销售额由数量乘单价重新计算。",
+    "加权均价按总销售额除以总销量，不是单价列的简单平均。"
+  ],
+  "metrics": [
+    {
+      "name": "sales_amount",
+      "label": "销售额",
+      "expression": "ROUND(SUM(quantity * unit_price), 2)",
+      "unit": "金额（币种未指定）",
+      "description": "数量乘单价后汇总；包含范围内全部销售记录。"
+    },
+    {
+      "name": "units_sold",
+      "label": "销量",
+      "expression": "SUM(quantity)",
+      "unit": "件",
+      "description": "销售数量之和，与销售额不同。"
+    },
+    {
+      "name": "record_count",
+      "label": "销售记录数",
+      "expression": "COUNT(*)",
+      "unit": "条",
+      "description": "数据行数，不包含表头；不能当作独立订单数。"
+    },
+    {
+      "name": "weighted_unit_price",
+      "label": "加权成交均价",
+      "expression": "ROUND(SUM(quantity * unit_price) / NULLIF(SUM(quantity), 0), 2)",
+      "unit": "金额/件",
+      "description": "总销售额除以总销量；销量为零时返回null。"
+    },
+    {
+      "name": "average_record_sales",
+      "label": "平均每条记录销售额",
+      "expression": "ROUND(AVG(quantity * unit_price), 2)",
+      "unit": "金额/条",
+      "description": "按销售记录计算的平均销售额；没有订单ID，不能称为客单价。"
+    }
+  ]
+}

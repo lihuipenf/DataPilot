@@ -7,9 +7,10 @@ from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_FILES = {"app.py", "api_test.py", "main.py", "sales_tools.py", "check_tools.py", "sales.csv",
-              "README.md", ".env.example", ".gitignore", "requirements.txt", "requirements-lock.txt", "start_datapilot.ps1"}
-FOLDERS = {"datapilot", "static", "tests", "evals", "docs", "scripts"}
-EXTENSIONS = {".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt", ".png", ".webm"}
+              "README.md", "README_EN.md", "CONTRIBUTING.md", "CHANGELOG.md", "Dockerfile", "compose.yaml",
+              ".dockerignore", ".gitattributes", ".env.example", ".gitignore", "requirements.txt", "requirements-lock.txt", "start_datapilot.ps1"}
+FOLDERS = {"datapilot", "static", "tests", "evals", "docs", "scripts", "semantic", ".github", "examples"}
+EXTENSIONS = {".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt", ".png", ".webm", ".yml", ".yaml"}
 
 
 def package():

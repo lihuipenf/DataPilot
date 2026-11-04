@@ -9,6 +9,14 @@ class ModelError(RuntimeError):
         self.code = code
 
 
+class MissingKeyGateway:
+    """允许查看恢复的实时会话，但不伪装成已配置模型。"""
+    mode = "live"
+
+    def complete(self, messages, tools, allow_tools=True):
+        raise ModelError("missing_key", "当前未配置DeepSeek密钥，可先切换离线演示模式。")
+
+
 @dataclass
 class ToolCall:
     id: str

@@ -1,0 +1,29 @@
+[
+  {
+    "rows": 1000,
+    "csv_bytes": 27532,
+    "load_ms": 5.25,
+    "sql_prepare_ms": 1.42,
+    "sql_query_ms": 0,
+    "expected_total": "45250.0",
+    "passed": true
+  },
+  {
+    "rows": 10000,
+    "csv_bytes": 275032,
+    "load_ms": 15.19,
+    "sql_prepare_ms": 8.28,
+    "sql_query_ms": 0,
+    "expected_total": "452500.0",
+    "passed": true
+  },
+  {
+    "rows": 50000,
+    "csv_bytes": 1375032,
+    "load_ms": 72.75,
+    "sql_prepare_ms": 43.53,
+    "sql_query_ms": 2,
+    "expected_total": "2262500.0",
+    "passed": true
+  }
+]

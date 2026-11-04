@@ -1,0 +1,601 @@
+[
+  {
+    "id": "schema",
+    "question": "读取当前sales表的字段契约和类型。",
+    "mode": "live",
+    "answer": "sales 表共有 5 个字段，数据行数为 5：\n\n| 字段 | 类型 | 含义 |\n|---|---|---|\n| date | TEXT | 销售日期，格式为 YYYY-MM-DD |\n| product | TEXT | 商品原始名称 |\n| quantity | INTEGER | 本条记录的销售数量 |\n| unit_price | REAL | 单价；币种未指定 |\n| sales_amount | REAL | 由 quantity 与 unit_price 相乘得出，并由程序重新计算 |\n\n补充说明：表中没有订单ID字段，因此销售记录数不等于订单数。",
+    "traces": [
+      {
+        "name": "get_data_schema",
+        "arguments": {},
+        "result": {
+          "table": "sales",
+          "dialect": "SQLite",
+          "columns": [
+            {
+              "name": "date",
+              "type": "TEXT",
+              "meaning": "销售日期，YYYY-MM-DD"
+            },
+            {
+              "name": "product",
+              "type": "TEXT",
+              "meaning": "商品原始名称"
+            },
+            {
+              "name": "quantity",
+              "type": "INTEGER",
+              "meaning": "本条记录的销售数量"
+            },
+            {
+              "name": "unit_price",
+              "type": "REAL",
+              "meaning": "单价，币种未指定"
+            },
+            {
+              "name": "sales_amount",
+              "type": "REAL",
+              "meaning": "quantity乘unit_price，程序重算"
+            }
+          ],
+          "row_count": 5
+        },
+        "success": true,
+        "duration_ms": 0
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3528,
+      "completion_tokens": 144
+    },
+    "request_count": 2,
+    "duration_ms": 1915,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "weighted-metric",
+    "question": "请使用业务指标 weighted_unit_price 查询当前全部数据的加权成交均价。",
+    "mode": "live",
+    "answer": "全部数据的加权成交均价为 **150.0（金额/件）**。\n\n口径说明：按 `weighted_unit_price` 的定义，即总销售额（Σ 数量×单价）÷ 总销量，并非单价列的简单平均；币种未指定。",
+    "traces": [
+      {
+        "name": "get_business_metrics",
+        "arguments": {},
+        "result": {
+          "version": "1.0",
+          "table": "sales",
+          "assumptions": [
+            "一行代表一条销售记录，不等于独立订单；数据中没有订单ID。",
+            "币种未指定；金额口径不包括税费、退款或汇率转换。",
+            "数量为非负整数；单价非负；销售额由数量乘单价重新计算。",
+            "加权均价按总销售额除以总销量，不是单价列的简单平均。"
+          ],
+          "metrics": [
+            {
+              "name": "sales_amount",
+              "label": "销售额",
+              "expression": "ROUND(SUM(quantity * unit_price), 2)",
+              "unit": "金额（币种未指定）",
+              "description": "数量乘单价后汇总；包含范围内全部销售记录。"
+            },
+            {
+              "name": "units_sold",
+              "label": "销量",
+              "expression": "SUM(quantity)",
+              "unit": "件",
+              "description": "销售数量之和，与销售额不同。"
+            },
+            {
+              "name": "record_count",
+              "label": "销售记录数",
+              "expression": "COUNT(*)",
+              "unit": "条",
+              "description": "数据行数，不包含表头；不能当作独立订单数。"
+            },
+            {
+              "name": "weighted_unit_price",
+              "label": "加权成交均价",
+              "expression": "ROUND(SUM(quantity * unit_price) / NULLIF(SUM(quantity), 0), 2)",
+              "unit": "金额/件",
+              "description": "总销售额除以总销量；销量为零时返回null。"
+            },
+            {
+              "name": "average_record_sales",
+              "label": "平均每条记录销售额",
+              "expression": "ROUND(AVG(quantity * unit_price), 2)",
+              "unit": "金额/条",
+              "description": "按销售记录计算的平均销售额；没有订单ID，不能称为客单价。"
+            }
+          ]
+        },
+        "success": true,
+        "duration_ms": 1
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric": "weighted_unit_price"
+        },
+        "result": {
+          "metric": "weighted_unit_price",
+          "definition_version": "1.0",
+          "sql": "SELECT ROUND(SUM(quantity * unit_price) / NULLIF(SUM(quantity), 0), 2) AS value FROM sales",
+          "parameters": [],
+          "columns": [
+            "value"
+          ],
+          "rows": [
+            {
+              "value": 150.0
+            }
+          ],
+          "row_count": 1,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 6
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 6036,
+      "completion_tokens": 133
+    },
+    "request_count": 3,
+    "duration_ms": 2655,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "metric-date",
+    "question": "使用已定义的 sales_amount 指标，按date分组查询每天销售额。",
+    "mode": "live",
+    "answer": "按 sales_amount 指标（quantity × unit_price 求和）按日期分组，结果如下（金额单位未指定）：\n\n| 日期 | 销售额 |\n|---|---|\n| 2026-11-01 | 350.0 |\n| 2026-11-02 | 1000.0 |\n\n共 2 个有记录的日期，结果未截断。数据仅覆盖这两天，两天合计 1350.0。",
+    "traces": [
+      {
+        "name": "get_business_metrics",
+        "arguments": {},
+        "result": {
+          "version": "1.0",
+          "table": "sales",
+          "assumptions": [
+            "一行代表一条销售记录，不等于独立订单；数据中没有订单ID。",
+            "币种未指定；金额口径不包括税费、退款或汇率转换。",
+            "数量为非负整数；单价非负；销售额由数量乘单价重新计算。",
+            "加权均价按总销售额除以总销量，不是单价列的简单平均。"
+          ],
+          "metrics": [
+            {
+              "name": "sales_amount",
+              "label": "销售额",
+              "expression": "ROUND(SUM(quantity * unit_price), 2)",
+              "unit": "金额（币种未指定）",
+              "description": "数量乘单价后汇总；包含范围内全部销售记录。"
+            },
+            {
+              "name": "units_sold",
+              "label": "销量",
+              "expression": "SUM(quantity)",
+              "unit": "件",
+              "description": "销售数量之和，与销售额不同。"
+            },
+            {
+              "name": "record_count",
+              "label": "销售记录数",
+              "expression": "COUNT(*)",
+              "unit": "条",
+              "description": "数据行数，不包含表头；不能当作独立订单数。"
+            },
+            {
+              "name": "weighted_unit_price",
+              "label": "加权成交均价",
+              "expression": "ROUND(SUM(quantity * unit_price) / NULLIF(SUM(quantity), 0), 2)",
+              "unit": "金额/件",
+              "description": "总销售额除以总销量；销量为零时返回null。"
+            },
+            {
+              "name": "average_record_sales",
+              "label": "平均每条记录销售额",
+              "expression": "ROUND(AVG(quantity * unit_price), 2)",
+              "unit": "金额/条",
+              "description": "按销售记录计算的平均销售额；没有订单ID，不能称为客单价。"
+            }
+          ]
+        },
+        "success": true,
+        "duration_ms": 1
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric": "sales_amount",
+          "group_by": "date"
+        },
+        "result": {
+          "metric": "sales_amount",
+          "definition_version": "1.0",
+          "sql": "SELECT date, ROUND(SUM(quantity * unit_price), 2) AS value FROM sales GROUP BY date ORDER BY date",
+          "parameters": [],
+          "columns": [
+            "date",
+            "value"
+          ],
+          "rows": [
+            {
+              "date": "2026-11-01",
+              "value": 350.0
+            },
+            {
+              "date": "2026-11-02",
+              "value": 1000.0
+            }
+          ],
+          "row_count": 2,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 6079,
+      "completion_tokens": 183
+    },
+    "request_count": 3,
+    "duration_ms": 2641,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "sql-total",
+    "question": "用只读SQL查询sales所有记录的总销售额，结果列请命名为total。",
+    "mode": "live",
+    "answer": "查询结果：\n\n| total |\n|------|\n| 1350.0 |\n\nsales 表所有记录的总销售额为 **1350.0**（未截断，单行结果；数据未提供币种单位）。",
+    "traces": [
+      {
+        "name": "run_readonly_sql",
+        "arguments": {
+          "sql": "SELECT SUM(sales_amount) AS total FROM sales"
+        },
+        "result": {
+          "sql": "SELECT SUM(sales_amount) AS total FROM sales",
+          "parameters": [],
+          "columns": [
+            "total"
+          ],
+          "rows": [
+            {
+              "total": 1350.0
+            }
+          ],
+          "row_count": 1,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3485,
+      "completion_tokens": 95
+    },
+    "request_count": 2,
+    "duration_ms": 1713,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "sql-products",
+    "question": "请使用只读SQL，按product分组计算SUM(sales_amount)，结果列为product和total，按total降序展示所有商品。",
+    "mode": "live",
+    "answer": "按 product 分组汇总 sales_amount 的结果（降序，全部 3 个商品，未截断）：\n\n| product | total |\n|---|---|\n| Monitor | 800.0 |\n| Keyboard | 300.0 |\n| Mouse | 250.0 |\n\n说明：sales_amount 为数量乘单价，币种数据中未指定。结果未截断，已覆盖全部商品。",
+    "traces": [
+      {
+        "name": "get_data_schema",
+        "arguments": {},
+        "result": {
+          "table": "sales",
+          "dialect": "SQLite",
+          "columns": [
+            {
+              "name": "date",
+              "type": "TEXT",
+              "meaning": "销售日期，YYYY-MM-DD"
+            },
+            {
+              "name": "product",
+              "type": "TEXT",
+              "meaning": "商品原始名称"
+            },
+            {
+              "name": "quantity",
+              "type": "INTEGER",
+              "meaning": "本条记录的销售数量"
+            },
+            {
+              "name": "unit_price",
+              "type": "REAL",
+              "meaning": "单价，币种未指定"
+            },
+            {
+              "name": "sales_amount",
+              "type": "REAL",
+              "meaning": "quantity乘unit_price，程序重算"
+            }
+          ],
+          "row_count": 5
+        },
+        "success": true,
+        "duration_ms": 0
+      },
+      {
+        "name": "run_readonly_sql",
+        "arguments": {
+          "sql": "SELECT product, SUM(sales_amount) AS total FROM sales GROUP BY product ORDER BY total DESC",
+          "limit": 200
+        },
+        "result": {
+          "sql": "SELECT product, SUM(sales_amount) AS total FROM sales GROUP BY product ORDER BY total DESC",
+          "parameters": [],
+          "columns": [
+            "product",
+            "total"
+          ],
+          "rows": [
+            {
+              "product": "Monitor",
+              "total": 800.0
+            },
+            {
+              "product": "Keyboard",
+              "total": 300.0
+            },
+            {
+              "product": "Mouse",
+              "total": 250.0
+            }
+          ],
+          "row_count": 3,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 5653,
+      "completion_tokens": 189
+    },
+    "request_count": 3,
+    "duration_ms": 3051,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "sql-date-filter",
+    "question": "用只读SQL查询2026-11-01当天SUM(sales_amount)，结果列命名total。",
+    "mode": "live",
+    "answer": "2026-11-01 当天 SUM(sales_amount) = **350.0**（结果列名为 total）。数据未指定币种，故未加货币单位。",
+    "traces": [
+      {
+        "name": "get_data_schema",
+        "arguments": {},
+        "result": {
+          "table": "sales",
+          "dialect": "SQLite",
+          "columns": [
+            {
+              "name": "date",
+              "type": "TEXT",
+              "meaning": "销售日期，YYYY-MM-DD"
+            },
+            {
+              "name": "product",
+              "type": "TEXT",
+              "meaning": "商品原始名称"
+            },
+            {
+              "name": "quantity",
+              "type": "INTEGER",
+              "meaning": "本条记录的销售数量"
+            },
+            {
+              "name": "unit_price",
+              "type": "REAL",
+              "meaning": "单价，币种未指定"
+            },
+            {
+              "name": "sales_amount",
+              "type": "REAL",
+              "meaning": "quantity乘unit_price，程序重算"
+            }
+          ],
+          "row_count": 5
+        },
+        "success": true,
+        "duration_ms": 0
+      },
+      {
+        "name": "run_readonly_sql",
+        "arguments": {
+          "sql": "SELECT SUM(sales_amount) AS total FROM sales WHERE date = '2026-11-01'"
+        },
+        "result": {
+          "sql": "SELECT SUM(sales_amount) AS total FROM sales WHERE date = '2026-11-01'",
+          "parameters": [],
+          "columns": [
+            "total"
+          ],
+          "rows": [
+            {
+              "total": 350.0
+            }
+          ],
+          "row_count": 1,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 5563,
+      "completion_tokens": 120
+    },
+    "request_count": 3,
+    "duration_ms": 2618,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "sql-row-count",
+    "question": "用只读SQL查询sales的COUNT(*)，结果列命名record_count。",
+    "mode": "live",
+    "answer": "sales 表的记录数（COUNT(*)）为 **5**，结果列名 record_count，未截断。\n\n注意：这是销售记录数，不代表订单数。",
+    "traces": [
+      {
+        "name": "run_readonly_sql",
+        "arguments": {
+          "sql": "SELECT COUNT(*) AS record_count FROM sales"
+        },
+        "result": {
+          "sql": "SELECT COUNT(*) AS record_count FROM sales",
+          "parameters": [],
+          "columns": [
+            "record_count"
+          ],
+          "rows": [
+            {
+              "record_count": 5
+            }
+          ],
+          "row_count": 1,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 2
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 3478,
+      "completion_tokens": 82
+    },
+    "request_count": 2,
+    "duration_ms": 2062,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  },
+  {
+    "id": "sql-having",
+    "question": "请用只读SQL按product分组，查询SUM(sales_amount)>250的商品，输出列product和total，按total降序。",
+    "mode": "live",
+    "answer": "筛选出累计销售额大于250的商品共2个，结果未截断：\n\n| product | total |\n|---|---|\n| Monitor | 800.0 |\n| Keyboard | 300.0 |\n\n说明：金额基于 sales_amount，是数量乘以单价，币种未指定；全表共5条记录。",
+    "traces": [
+      {
+        "name": "get_data_schema",
+        "arguments": {},
+        "result": {
+          "table": "sales",
+          "dialect": "SQLite",
+          "columns": [
+            {
+              "name": "date",
+              "type": "TEXT",
+              "meaning": "销售日期，YYYY-MM-DD"
+            },
+            {
+              "name": "product",
+              "type": "TEXT",
+              "meaning": "商品原始名称"
+            },
+            {
+              "name": "quantity",
+              "type": "INTEGER",
+              "meaning": "本条记录的销售数量"
+            },
+            {
+              "name": "unit_price",
+              "type": "REAL",
+              "meaning": "单价，币种未指定"
+            },
+            {
+              "name": "sales_amount",
+              "type": "REAL",
+              "meaning": "quantity乘unit_price，程序重算"
+            }
+          ],
+          "row_count": 5
+        },
+        "success": true,
+        "duration_ms": 0
+      },
+      {
+        "name": "run_readonly_sql",
+        "arguments": {
+          "sql": "SELECT product, SUM(sales_amount) AS total FROM sales GROUP BY product HAVING SUM(sales_amount) > 250 ORDER BY total DESC"
+        },
+        "result": {
+          "sql": "SELECT product, SUM(sales_amount) AS total FROM sales GROUP BY product HAVING SUM(sales_amount) > 250 ORDER BY total DESC",
+          "parameters": [],
+          "columns": [
+            "product",
+            "total"
+          ],
+          "rows": [
+            {
+              "product": "Monitor",
+              "total": 800.0
+            },
+            {
+              "product": "Keyboard",
+              "total": 300.0
+            }
+          ],
+          "row_count": 2,
+          "truncated": false,
+          "execution_ms": 0
+        },
+        "success": true,
+        "duration_ms": 1
+      }
+    ],
+    "artifacts": [],
+    "usage": {
+      "prompt_tokens": 5643,
+      "completion_tokens": 164
+    },
+    "request_count": 3,
+    "duration_ms": 3708,
+    "estimated_cost": null,
+    "tool_success": true,
+    "answer_success": true,
+    "success": true
+  }
+]

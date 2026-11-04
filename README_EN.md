@@ -1,6 +1,6 @@
 # DataPilot
 
-[中文文档](README.md) · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
+[中文文档](README.md) · [Detailed setup guide (Chinese)](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
 
 A local, explainable sales analytics agent powered by Python with DeepSeek, OpenAI/Codex (Responses API), Claude (native Messages API), and OpenAI-compatible Chat Completions providers. Ask questions, inspect tool evidence and read-only SQL, generate charts, and export reports.
 
@@ -19,24 +19,83 @@ The design learns from DB-GPT's execution layering and WrenAI's semantic-context
 
 ## Run
 
-Use Python 3.12, create a virtual environment and install `requirements-lock.txt`. Copy `.env.example` to `.env` and configure the desired provider's API key. Existing DeepSeek configuration remains valid. See [provider configuration](docs/models.md). Run:
+Install Git and **Python 3.12.x** first. Node.js and frontend build tools are not required. The repository is currently private: cloning requires an authorized GitHub account. If you already have the source, open its root directory (containing `app.py`) and skip cloning.
 
-```sh
-python app.py
+**Windows PowerShell** — check `python --version` is 3.12.x. If needed, use `py -3.12` to create the environment:
+
+```powershell
+git clone https://github.com/lihuipenf/DataPilot.git
+Set-Location DataPilot
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+$env:MPLCONFIGDIR = Join-Path (Get-Location).Path ".cache\matplotlib"
+.\.venv\Scripts\python.exe app.py
 ```
 
-Open http://127.0.0.1:8765. Offline demo is the default and needs no model key; real model analysis is selected explicitly in the UI. Sessions are stored under `outputs/`, excluded from Git.
+The cache setting works on machines without a D: drive. Virtual environment activation and changes to PowerShell execution policy are unnecessary.
 
-Choose provider and model ID in the UI, then apply. Switching creates a new session that copies the dataset and preserves the old conversation. Provider and model provenance survive restarts. OpenAI access uses an API key with model permission; Codex desktop login credentials are not used. Only network protocol tests are available for providers without local credentials; do not interpret these as live model evaluations.
+**macOS / Linux** — use Python 3.12:
 
-```sh
-python -m unittest discover -v
-python -m evals.run_eval --mode demo
-python -m evals.run_eval --mode live --cases evals/sql_cases.json
-python -m evals.benchmark_data
+```bash
+git clone https://github.com/lihuipenf/DataPilot.git
+cd DataPilot
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements-lock.txt
+.venv/bin/python app.py
 ```
 
-With Docker installed and a local `.env`, use `docker compose up --build`. The host port is bound to loopback; a named volume stores runtime data.
+If only `python3` is available, confirm it is 3.12 before using it to create the environment. Some Linux distributions require the matching venv package. Install a supported CJK font such as Noto Sans CJK SC if chart labels show missing glyphs; the Docker image includes CJK fonts.
+
+Open **http://127.0.0.1:8765** and keep the terminal running. Offline rules demo is the default: **no `.env` or API key is needed for native startup**. Dependency installation needs internet access; demo questions do not call a model. Ask `所有商品的总销售额是多少？` and expect **1350**, then inspect the tool evidence. The default dataset has five rows and three products. Stop the native server with `Ctrl+C`.
+
+Sessions are stored under `outputs/`, excluded from Git. Reuse the same directory to restore history after a restart. The health endpoint is `/api/health`; `/openapi.json` provides the API schema, while interactive `/docs` and `/redoc` are disabled.
+
+To use a real model, create `.env` **only if it does not exist**:
+
+```powershell
+# Windows PowerShell
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
+```
+
+```bash
+# macOS / Linux
+if [ ! -f .env ]; then cp .env.example .env; fi
+```
+
+Edit the desired provider's API key and model ID, then restart the server. Existing DeepSeek configuration remains valid. See [provider configuration](docs/models.md). Keep keys local; live requests may incur API costs.
+
+Choose provider and model ID in the UI, then select **大模型实时分析** (live model analysis) in the mode dropdown. Clicking Apply while the mode is still offline demo continues to use rules. Switching creates a new session that copies the dataset and preserves the old conversation. Provider and model provenance survive restarts. OpenAI access uses an API key with model permission; Codex desktop login credentials are not used. Only network protocol tests are available for providers without local credentials; do not interpret these as live model evaluations.
+
+Optional checks, shown for macOS/Linux (Windows uses `.\.venv\Scripts\python.exe`):
+
+```bash
+.venv/bin/python -m pip check
+.venv/bin/python -m unittest discover -v
+.venv/bin/python -m evals.run_eval --mode demo
+```
+
+## Docker Compose
+
+Install and start Docker, check `docker compose version`, and create the local `.env` with the guarded copy command above. Compose requires this file even for the offline demo; keys may remain empty. Host Python is not required.
+
+```bash
+docker compose up --build -d
+docker compose ps
+docker compose logs -f datapilot
+```
+
+Open the same local URL. `Ctrl+C` exits log following without stopping the container. To stop, run `docker compose down` without `-v` to retain the named volume. Docker state is separate from native `outputs/`; changing the Compose project name/location can select a different volume. After editing `.env`, run `docker compose up -d --force-recreate`; after source updates, run `docker compose up --build -d`.
+
+## Troubleshooting and updates
+
+- **Missing packages:** install with the same virtual environment interpreter used to run `app.py`. In PyCharm select that interpreter explicitly.
+- **Port 8765 already in use:** stop your earlier native/container instance, or run `.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8766` (Windows: replace the interpreter path), then open port 8766.
+- **Repository not found:** private repository access requires an authorized GitHub account.
+- **Missing `.env`:** native demo does not need it; Compose does. Use the guarded copy command to preserve existing credentials.
+- **Unexpected model configuration:** process environment variables override `.env`; restart native services or recreate containers after changes.
+- **Updating:** stop native services and back up the full `outputs/` directory and local `.env`. Save source edits before `git pull --ff-only`, reinstall locked dependencies, then restart. Do not overwrite `.env` with the example. Container data lives in its named volume.
+
+The [detailed setup guide](docs/getting-started.md) covers first-run checks, PyCharm, data locations, and common failures. Windows native setup and Linux container startup are verified separately; macOS native commands require testing on that platform.
 
 ## Boundaries and evidence
 

@@ -1,6 +1,6 @@
 # DataPilot · 销售数据分析 Agent
 
-[English](README_EN.md) · [变更记录](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md) · [v1.1设计](docs/v1.1-plan.md)
+[English](README_EN.md) · [完整启动教程](docs/getting-started.md) · [变更记录](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
 
 用自然语言查询销售数据，查看计算依据，生成图表并导出报告。项目从 CSV / Pandas 练习发展为一个带工具调用、短期对话记忆和质量校验的本地应用。
 
@@ -10,26 +10,34 @@
 
 ## 快速运行
 
-已有本项目虚拟环境时，在 PyCharm 打开项目，选择 `.venv/Scripts/python.exe`，右键运行 **`app.py`**，浏览器打开 **http://127.0.0.1:8765**。
+需要 **Git 和 Python 3.12.x**，无需 Node.js、前端构建或模型密钥。先在你选择的父目录打开终端。仓库目前私有，克隆需要有访问权限的 GitHub 账号；已有源码请直接进入含 `app.py` 的项目根目录，跳过克隆。
 
-页面默认是**离线演示模式**：使用规则选择工具，由 Python 代码计算数据，不消耗模型调用额度。右上角选择服务商与模型 ID，点击“应用模型”或切换“大模型实时分析”。网页切换会新建会话、复制当前CSV并保留旧会话。
-
-网页会话默认保存到 `outputs/state.sqlite3`，服务重启后可以从“历史会话”恢复数据、回答与计算依据。“新建会话”保留旧会话并复制当前数据；“新对话”会清空当前会话历史。
-
-全新安装（Windows PowerShell，Python 3.12）：
+**Windows PowerShell**（先用 `python --version` 确认是3.12.x）：
 
 ```powershell
-Set-Location "D:\agent ai\DataPilot"
-New-Item -ItemType Directory -Path "D:\CodexData\temp" -Force | Out-Null
-$env:TEMP = "D:\CodexData\temp"
-$env:TMP = "D:\CodexData\temp"
-$env:PIP_CACHE_DIR = "D:\CodexData\caches\pip"
+git clone https://github.com/lihuipenf/DataPilot.git
+Set-Location DataPilot
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+$env:MPLCONFIGDIR = Join-Path (Get-Location).Path ".cache\matplotlib"
 .\.venv\Scripts\python.exe app.py
 ```
 
-也可使用 `start_datapilot.ps1`，它为本次运行设置D盘缓存。启动服务后保持该终端运行。端口被占用时，先关闭自己之前启动的实例。
+**macOS / Linux**（先用 `python3.12 --version` 确认解释器）：
+
+```bash
+git clone https://github.com/lihuipenf/DataPilot.git
+cd DataPilot
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements-lock.txt
+.venv/bin/python app.py
+```
+
+浏览器打开 **http://127.0.0.1:8765**，保留终端运行。默认是**离线规则演示**，无需 `.env` 或API Key；首次安装需要下载依赖，启动后演示问答不调用外部模型。输入“所有商品的总销售额是多少？”，示例数据应回答 **1350**，展开“分析过程”可查看工具结果。按 `Ctrl+C` 停止。
+
+安装、PyCharm、Docker、模型配置、升级与排错步骤见 [完整启动教程](docs/getting-started.md)。Windows命令直接使用虚拟环境解释器，无需激活环境或修改PowerShell执行策略；字体缓存设置适用于没有D盘的电脑。
+
+网页会话默认保存在 `outputs/state.sqlite3`。重启后可恢复历史；网页切换模式或应用模型会复制当前数据并新建会话，保留旧历史。
 
 ## 模型配置
 
@@ -103,7 +111,7 @@ datapilot/
   sql.py                只读SQL执行与资源限制
   semantic.py           指标契约与受控指标查询
   store.py              SQLite持久会话与恢复
-  models.py             DeepSeek客户端、超时与有界重试
+  models.py             多模型协议适配、超时与有界重试
   demo.py               明确标注的离线规则演示
   agent.py              工具循环、历史与完整上下文预算
   reports.py            Markdown和CSV导出
@@ -122,7 +130,7 @@ outputs/                运行产物（Git忽略，保留在本地）
 ```powershell
 .\.venv\Scripts\python.exe api_test.py --demo
 .\.venv\Scripts\python.exe api_test.py
-.\.venv\Scripts\python.exe api_test.py --csv "D:\你的数据\sales.csv"
+.\.venv\Scripts\python.exe api_test.py --csv "path/to/sales.csv"
 ```
 
 ## 测试和评测
@@ -134,8 +142,8 @@ outputs/                运行产物（Git忽略，保留在本地）
 # 26题规则演示回归，不消耗模型额度
 .\.venv\Scripts\python.exe -m evals.run_eval --mode demo
 
-# 26题真实DeepSeek评测，并运行24题单次生成基线（会调用API）
-.\.venv\Scripts\python.exe -m evals.run_eval --mode live --baseline
+# 真实DeepSeek评测与单次生成基线（会调用API）
+.\.venv\Scripts\python.exe -m evals.run_eval --mode live --provider deepseek --baseline
 
 # 新增SQL与指标题集，调用真实模型
 .\.venv\Scripts\python.exe -m evals.run_eval --mode live --cases evals/sql_cases.json
@@ -148,7 +156,7 @@ outputs/                运行产物（Git忽略，保留在本地）
 
 ## 运行边界
 
-这是单用户本地作品，默认仅监听 `127.0.0.1`，不作为公网多租户服务。网页数据与对话保存在本地SQLite，缓存最多32个活跃会话；更换数据或模式重开当前对话。命令行会话仍为进程内存。模型保留最近6个完整轮次，并把每次消息上下文限制在24,000字符，超限时先移除旧轮次，再给出可解释的范围提示。
+这是单用户本地作品，默认仅监听 `127.0.0.1`，不作为公网多租户服务。网页数据与对话保存在本地SQLite，缓存最多32个活跃会话；网页切换模式或应用模型时保留旧会话并新建，更换当前会话的数据会清空该会话的分析历史。命令行会话仍为进程内存。模型保留最近6个完整轮次，并把每次消息上下文限制在24,000字符，超限时先移除旧轮次，再给出可解释的范围提示。
 
 每轮最多4轮工具选择、8次工具执行，最后一轮仅生成回答；每个模型步骤最多2次HTTP尝试，默认单次超时45秒。失败不提交不完整历史。Token来自服务返回值；可在 `.env` 填写每百万Token单价估算费用，实际账单以服务商为准。
 
@@ -161,8 +169,8 @@ outputs/                运行产物（Git忽略，保留在本地）
 
 ## Docker与CI
 
-安装Docker后，在项目目录准备本地 `.env`，运行 `docker compose up --build`，浏览器打开同一地址。命名卷保存会话和产物，端口只绑定宿主机回环地址。镜像以非root用户运行，并提供健康检查。
+已安装并启动Docker时，先按 [Docker启动步骤](docs/getting-started.md#docker-启动) 创建本地 `.env`，再运行 `docker compose up --build -d`。默认不填密钥即可离线演示。命名卷保存会话和产物，端口只绑定宿主机回环地址。镜像以非root用户运行，并提供健康检查。
 
 GitHub Actions运行无密钥单元/集成测试、离线评测和容器冒烟测试；真实模型评测保留为本地显式命令。Actions依赖固定到已核对的提交SHA。
 
-当前仓库按所有者要求保持私有，后续公开另行决定。原练习文件备份保留在 `D:\CodexData\temp\DataPilot-original-20261104-151046`，本地 `.env` 保留且不提交。参见 [v1.1设计与来源](docs/v1.1-plan.md)。
+当前仓库保持私有，后续公开另行决定。本地 `.env`、业务数据、虚拟环境及运行产物不提交。参见 [v1.1设计与来源](docs/v1.1-plan.md)。

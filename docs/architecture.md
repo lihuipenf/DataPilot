@@ -3,7 +3,8 @@
 ```mermaid
 flowchart LR
     UI[浏览器 / 命令行] --> Session[会话与Agent]
-    Session --> Model[DeepSeek / 离线演示]
+    Session --> Model[多模型网关 / 离线演示]
+    Model --> Providers[DeepSeek / OpenAI Responses / Claude / 兼容接口]
     Model -->|工具调用请求| Registry[白名单与Pydantic校验]
     Registry --> Data[Pandas计算]
     Registry --> Chart[Agg生成PNG]
@@ -32,9 +33,11 @@ flowchart LR
 
 **模型层**统一屏蔽密钥和底层异常详情。超时、网络、限流及服务端错误最多重试一次；鉴权错误不重试。模型步骤数是Agent逻辑步骤，不等于HTTP尝试次数。
 
+v1.2通过 `create_gateway` 选择原生协议，统一返回 `ModelReply`。OpenAI续传完整输出项（含推理信息和phase），Claude续传原生内容块并合并并行工具结果；HTTP200但格式无效也返回受控错误。服务商与模型绑定到会话，只有服务端读取凭据，配置详见 [多模型指南](models.md)。
+
 **上下文层**按完整轮次移除旧消息，避免留下孤立的tool消息。检查范围包含本轮工具结果；超大并列清单会明确给出截断标记与总数量。若本轮仍超预算，要求缩小查询范围，不静默丢弃证据。
 
-**界面层**不保存密钥。通过textContent等安全DOM接口显示用户输入和模型文字；图表仅来自当前会话生成的合法PNG名称。切换模式保留数据，开始新对话；坏CSV替换是原子的。
+**界面层**不保存密钥。通过textContent等安全DOM接口显示用户输入和模型文字；图表仅来自当前会话生成的合法PNG名称。网页切换模式或应用模型时复制数据并新建会话，原会话仍可恢复；坏CSV替换是原子的。
 
 **存储层**在v1.1中使用SQLite持久会话，保存数据、完整轮次、问答与执行证据；服务重启后按会话ID恢复。缓存最多32个活跃会话，旧状态保留在数据库。保存失败时不提交新的对话状态。命令行仍使用内存会话。多人部署仍需要身份认证、独立任务队列和跨进程会话协调。
 

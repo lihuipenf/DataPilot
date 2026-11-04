@@ -32,11 +32,13 @@ Pydantic同时负责生成给模型的JSON Schema和检查模型返回的参数�
 
 ## 5. 分清模型网关与演示模式
 
-读 `models.py` 和 `demo.py`。离线模式只是可控的规则示例，用来在无密钥环境体验交互；真实模式由DeepSeek决定工具。两者都调用同一套计算工具。
+读 `models.py` 和 `demo.py`。离线模式只是可控的规则示例，用来在无密钥环境体验交互；真实模式由所选模型决定工具。两者都调用同一套计算工具。
+
+v1.2继续读 `create_gateway()`、`ResponsesGateway` 和 `ClaudeGateway`：比较相同的内部工具消息如何转换为不同API协议。`provider_data` 为什么必须留在服务端历史中？为什么不能把DeepSeek的thinking参数发给所有服务商？配置操作见 [多模型指南](models.md)。
 
 ## 6. 理解网页入口
 
-读 `web.py` 的 `/chat`、`/dataset`、`/mode` 路由，再看 `static/app.js` 中的 `sendQuestion()` 和 `renderResult()`。浏览器只发送问题或CSV，服务器返回答案、工具记录和图表地址。
+读 `web.py` 的 `/chat`、`/dataset`、`/providers` 和创建会话路由，再看 `static/app.js` 中的 `startSession()`、`sendQuestion()` 和 `renderResult()`。浏览器发送问题、CSV或模型选择，服务器返回答案、工具记录和图表地址。旧 `/mode` 路由仍保留兼容。
 
 ## 7. 读测试和评测
 

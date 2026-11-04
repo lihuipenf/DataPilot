@@ -1,0 +1,14 @@
+{
+  "mode": "demo",
+  "model": "规则演示（非LLM）",
+  "cases": 26,
+  "passed": 26,
+  "tool_passed": 26,
+  "answer_passed": 26,
+  "median_latency_ms": 3,
+  "prompt_tokens": 0,
+  "completion_tokens": 0,
+  "baseline_cases": 0,
+  "baseline_passed": 0,
+  "failures": []
+}

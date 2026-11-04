@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DataPilot · 销售分析工作台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23117664'/%3E%3Cpath d='M17 43V29m15 14V18m15 25V24' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="DataPilot 首页"><span class="brand-icon"><i></i><i></i><i></i></span><span>DataPilot<small>你的数据分析搭档</small></span></a>
+    <div class="nav-label">工作空间</div>
+    <nav aria-label="工作区导航">
+      <button class="nav-item active" data-tab="analysis"><span>◈</span> 对话分析 <span class="nav-count">AI</span></button>
+      <button class="nav-item" data-tab="data"><span>▦</span> 数据预览</button>
+    </nav>
+    <div class="source-card" id="drop-zone">
+      <span class="card-eyebrow">当前数据源</span><span class="file-symbol">CSV</span>
+      <strong id="filename">sales.csv</strong><span id="file-info">正在读取数据…</span>
+      <div class="source-divider"></div>
+      <button class="upload-button" id="upload-button">＋ 上传销售数据</button>
+      <input type="file" id="file-input" accept=".csv,text/csv" hidden>
+      <small>拖入 CSV · 最大 5 MB</small>
+    </div>
+    <div class="sidebar-tip"><span>✧</span><p>让数据回答问题。<br>每一个结论，都能查看计算依据。</p></div>
+    <div class="sidebar-bottom"><span class="status-dot"></span> 本地工作台 <span>v1.0</span></div>
+  </aside>
+
+  <main>
+    <header class="topbar"><span class="breadcrumb">工作空间 <span>/</span> <strong id="view-name">对话分析</strong></span><div class="top-actions"><span class="local-badge">● 本地运行</span><button id="mobile-upload" class="button mobile-upload" onclick="document.querySelector('#file-input').click()">上传 CSV</button><a id="export-report" class="button secondary" download>↓ 导出报告</a></div></header>
+    <div class="page-body">
+      <section class="page-heading"><div><div class="eyebrow">DATA → INSIGHT</div><h1>销售分析工作台<span class="heading-dot">.</span></h1><p>用自然语言探索销售数据，让每一次决策都有依据。</p></div><div class="mode-control"><label for="mode">分析模式</label><select id="mode"><option value="demo">离线演示</option><option value="live">DeepSeek 实时分析</option></select><span id="model-state">正在连接…</span></div></section>
+      <section class="metrics" aria-label="销售概况">
+        <div class="metric"><span>总销售额 <i>↗</i></span><strong id="total-sales">—</strong><small>按数量 × 单价计算 · 币种未指定</small></div>
+        <div class="metric"><span>销售记录 <i>▤</i></span><strong id="row-count">—</strong><small id="date-range">—</small></div>
+        <div class="metric"><span>在售商品 <i>▦</i></span><strong id="product-count">—</strong><small>当前数据中的不同商品</small></div>
+        <div class="metric feature"><span>销售额最高 <i>✧</i></span><strong id="top-product">—</strong><small>累计销售额领先的商品</small></div>
+      </section>
+
+      <section id="analysis-view" class="workspace">
+        <div class="chat-panel">
+          <div class="panel-heading"><div><span class="green-square">✧</span><strong>分析助手</strong><span class="subtle-tag" id="mode-tag">离线演示</span></div><button id="clear-chat" class="text-button">新对话 ↗</button></div>
+          <div class="mode-notice" id="mode-notice">离线演示使用规则路由与真实数据计算，不调用大模型。</div>
+          <div id="chat-log" class="chat-log" aria-live="polite" aria-label="分析对话">
+            <div id="welcome" class="welcome"><div class="welcome-icon">✧</div><h2>从一个好问题开始</h2><p>我会选择合适的分析工具，计算结果，<br>再把数据转化为清晰的答案。</p><div class="prompt-grid"><button data-question="哪个商品的销售额最高？"><span>↗</span> 找出销售冠军 <small>对比商品销售表现</small></button><button data-question="按日期统计每天的销售额"><span>⌁</span> 查看每日趋势 <small>了解销售额的时间变化</small></button><button data-question="按销售额列出商品排名前3名"><span>▤</span> 商品销售排名 <small>快速查看表现领先的商品</small></button><button data-question="画商品销售额柱状图"><span>▥</span> 生成销售图表 <small>将分析结果可视化</small></button></div></div>
+          </div>
+          <form id="chat-form" class="composer"><label class="sr-only" for="question">输入销售分析问题</label><textarea id="question" placeholder="问点什么，例如：Keyboard 的销售额是多少？" rows="2" maxlength="2000"></textarea><div class="composer-bottom"><span><span class="tiny-dot"></span> 基于当前数据回答 <kbd>Enter</kbd> 发送</span><button id="send" type="submit" aria-label="发送问题">发送 <span>↑</span></button></div></form>
+        </div>
+        <aside class="insights-panel">
+          <div class="insight-card"><div class="card-heading"><h3>数据快照</h3><span class="green-dot"></span></div><p class="card-description">累计销售额 · 当前数据</p><div id="ranking-bars" class="ranking-bars"></div><button class="text-button full" id="show-data">查看完整数据 →</button></div>
+          <div class="insight-card capabilities"><h3>你可以问我</h3><button data-question="所有商品的总销售额是多少？"><span>∑</span>销售额汇总 <span>↗</span></button><button data-question="按销量给商品排名"><span>≡</span>销量与商品排名 <span>↗</span></button><button data-question="画每日销售趋势图"><span>⌁</span>趋势与图表 <span>↗</span></button><button data-question="介绍一下当前数据概况"><span>▦</span>数据概况 <span>↗</span></button></div>
+          <div class="evidence-note"><span>✓</span><p><strong>计算过程，可追溯</strong>展开回答下方的分析过程，即可查看使用的工具、参数与结果。</p></div>
+        </aside>
+      </section>
+
+      <section id="data-view" class="data-panel" hidden><div class="panel-heading"><div><span class="green-square">▦</span><strong>销售数据预览</strong></div><a id="export-csv" class="button secondary" download>↓ 导出商品汇总 CSV</a></div><p class="data-description">预览前 12 条记录。销售额由程序重新计算，上传数据须包含 date、product、quantity、unit_price 四列。</p><div class="table-wrap"><table><thead id="data-head"></thead><tbody id="data-body"></tbody></table></div><div class="data-footer"><span>✓ 已通过日期、数值与完整性校验</span><button id="restore-data" class="text-button">恢复示例数据</button></div></section>
+      <footer class="page-footer"><span>DataPilot / 从问题到洞察</span><span>数据在本地计算 · 实时模式会发送问题与工具结果至 DeepSeek</span></footer>
+    </div>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

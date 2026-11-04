@@ -1,0 +1,18 @@
+# 不将密钥配置提交到 Git
+.env
+
+# 不将虚拟环境和 Python 缓存提交到 Git
+.venv/
+__pycache__/
+# Local configuration and generated artifacts
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+.idea/
+.cache/
+outputs/
+.pytest_cache/
+dist/

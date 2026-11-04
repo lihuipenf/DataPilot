@@ -1,0 +1,45 @@
+# 从原练习代码理解新版
+
+建议每次只读一个模块，边打断点边运行，不需要一次读完整个项目。
+
+## 1. 从熟悉的数据计算开始
+
+读 `datapilot/data.py` 的 `load_sales()` 和 `validate_sales()`，再读 `datapilot/tools.py` 的三个原有工具。
+
+原来的 `df['quantity'] * df['unit_price']` 仍然存在。变化是它被放在统一的数据入口中；无论网页上传还是命令行读文件，都先执行同样的检查。`sales_tools.py` 保留了最初的函数签名，`check_tools.py` 仍可运行。
+
+练习：把单价改成文字、把日期改成不存在的日期，观察程序在哪一层拒绝数据。恢复原数据后再继续。
+
+## 2. 理解参数契约
+
+读 `ProductArgs`、`DateArgs`、`RankArgs` 和 `ToolRegistry.execute()`。
+
+Pydantic同时负责生成给模型的JSON Schema和检查模型返回的参数。它会拒绝遗漏商品名、无效日期、字符串排名数量、超过范围的排名和额外参数。JSON解析错误变成工具结果，模型可据此改正。
+
+练习：在Python控制台调用 `registry.execute('get_product_ranking', '{"limit":0}')`，查看结构化错误。
+
+## 3. 跟踪一次工具调用
+
+在 `AgentSession.ask()` 的 `gateway.complete()` 前后打断点。观察 `current` 如何依次出现 user、assistant工具请求、tool结果、assistant最终回答。
+
+原来的两次请求扩展成了有限循环，因而能够先查总额，再查排名或日期。注意：循环受上限约束，不会无限运行。
+
+## 4. 理解历史与失败恢复
+
+阅读 `_request_messages()` 和 `self.turns.append(current)`。完整轮次成功后才进入历史。观察网络失败前后 `turns` 的长度；旧轮次按整体移除，工具请求和结果不会被拆开。
+
+练习：先问Keyboard，再问“那Mouse呢？”，查看第二次请求中的历史。然后点击“新对话”，再观察历史长度。
+
+## 5. 分清模型网关与演示模式
+
+读 `models.py` 和 `demo.py`。离线模式只是可控的规则示例，用来在无密钥环境体验交互；真实模式由DeepSeek决定工具。两者都调用同一套计算工具。
+
+## 6. 理解网页入口
+
+读 `web.py` 的 `/chat`、`/dataset`、`/mode` 路由，再看 `static/app.js` 中的 `sendQuestion()` 和 `renderResult()`。浏览器只发送问题或CSV，服务器返回答案、工具记录和图表地址。
+
+## 7. 读测试和评测
+
+`tests/test_core.py` 用脚本化模型响应检查控制流程，实际Pandas计算和PNG生成不替换。`evals/run_eval.py --mode live` 才会真实调用模型。二者验证不同层面，不能互相冒充。
+
+面试时应能回答：为什么要有工具ID、为什么不能直接执行模型给出的函数字符串、为什么要按完整轮次裁剪历史、为什么单次回答正确不代表系统可靠。

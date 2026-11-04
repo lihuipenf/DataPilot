@@ -7,8 +7,16 @@ from typing import Literal
 from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .data import DataError, number
+from .jsonutil import validate_json
 
 CHART_LOCK = threading.Lock()
+
+
+def parse_arguments(arguments):
+    raw = json.loads(arguments) if isinstance(arguments,str) else arguments
+    if not isinstance(raw,dict):
+        raise ValueError("工具参数必须是 JSON 对象。")
+    return validate_json(raw)
 
 
 class NoArgs(BaseModel):
@@ -101,17 +109,15 @@ class ToolRegistry:
         if name not in SPECS:
             return {"error": f"不支持的工具：{name}", "code": "unknown_tool"}
         try:
-            raw = json.loads(arguments) if isinstance(arguments, str) else arguments
-            if not isinstance(raw, dict):
-                raise ValueError("工具参数必须是 JSON 对象。")
+            raw = parse_arguments(arguments)
             args = SPECS[name][0].model_validate(raw)
             return getattr(self, name)(**args.model_dump())
-        except (ValidationError, ValueError, TypeError) as error:
+        except (ValidationError, ValueError, TypeError, RecursionError) as error:
             if isinstance(error, ValidationError):
                 # 只公开字段和校验原因，不回显潜在敏感输入。
                 detail = "；".join(".".join(map(str, e["loc"])) + ": " + e["msg"] for e in error.errors())
             else:
-                detail = str(error) if not isinstance(error, json.JSONDecodeError) else "参数不是有效的 JSON。"
+                detail = "参数嵌套过深。" if isinstance(error,RecursionError) else str(error) if not isinstance(error, json.JSONDecodeError) else "参数不是有效的 JSON。"
             return {"error": detail, "code": "invalid_arguments"}
 
     def product_sales(self):

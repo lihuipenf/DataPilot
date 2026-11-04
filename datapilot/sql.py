@@ -67,7 +67,7 @@ class ReadOnlySql:
                     rows.append(dict(zip(columns, row)))
                 return {"sql": sql, "parameters": parameters or [], "columns": columns, "rows": rows, "row_count": len(rows),
                         "truncated": len(fetched) > limit, "execution_ms": round((time.perf_counter() - started) * 1000)}
-            except (sqlite3.Error, ValueError, TypeError) as error:
+            except (sqlite3.Error, ValueError, TypeError, OverflowError) as error:
                 timeout = time.perf_counter() >= deadline or "interrupted" in str(error).lower()
                 if timeout:
                     return {"error": "SQL执行超过时间限制，请减少连接或缩小范围。", "code": "sql_timeout"}

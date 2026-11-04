@@ -48,6 +48,8 @@ DEEPSEEK_TIMEOUT=45
 
 检查结果和下一步优先级见 [v1.2 检查报告](docs/review-v1.2.md)。
 
+**v1.2.1安全修复**：发布密钥扫描、商品编号解析、SQL整数溢出、跨站修改及异常JSON防护。详见 [Bug与安全检查记录](docs/security-review.md)。交互式 `/docs`、`/redoc` 已关闭，API契约可从 `/openapi.json` 获取。
+
 ## 可以做什么
 
 | 工具 | 能力 | 示例问题 |

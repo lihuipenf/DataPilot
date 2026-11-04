@@ -464,6 +464,7 @@ $("#question").addEventListener("keydown", (event) => {
   }
 });
 $("#upload-button").addEventListener("click", () => $("#file-input").click());
+$("#mobile-upload").addEventListener("click", () => $("#file-input").click());
 $("#file-input").addEventListener("change", (event) =>
   uploadFile(event.target.files[0]),
 );

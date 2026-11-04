@@ -1,2 +1,2 @@
 """DataPilot：可验证的销售数据分析 Agent。"""
-__version__ = "1.2.0"
+__version__ = "1.2.1"

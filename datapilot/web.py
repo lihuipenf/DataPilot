@@ -22,6 +22,7 @@ from .models import create_gateway, ModelError
 from .reports import markdown_report, summary_csv
 from .tools import ToolRegistry
 from .store import SessionStore, StorageError
+from .security import LocalSecurityMiddleware
 
 
 class SessionInput(BaseModel):
@@ -54,8 +55,10 @@ class Record:
 
 def create_app(settings=None):
     settings = settings or Settings.from_env()
-    app = FastAPI(title="DataPilot", version="1.2.0")
+    # 保留OpenAPI JSON；自动文档依赖外部CDN/内联脚本，与本地CSP不兼容。
+    app = FastAPI(title="DataPilot", version="1.2.1", docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver", "[::1]"])
+    app.add_middleware(LocalSecurityMiddleware)
     records, store_lock = {}, threading.RLock()
     store = SessionStore(settings.state_path) if settings.state_path else None
     app.state.records = records
@@ -147,7 +150,7 @@ def create_app(settings=None):
     @app.get("/api/health")
     def health():
         return {"status": "ok", "model": settings.model, "live_available": bool(settings.api_key),
-                "provider":settings.provider, "version": "1.2.0", "persistence":store is not None}
+                "provider":settings.provider, "version": "1.2.1", "persistence":store is not None}
 
     @app.get("/api/providers")
     def providers():

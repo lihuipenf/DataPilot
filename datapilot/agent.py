@@ -4,6 +4,7 @@ import json
 import time
 from .config import Settings
 from .models import ModelError
+from .tools import parse_arguments
 
 SYSTEM_PROMPT = """你是 DataPilot，一名销售数据分析助手。始终用简体中文回答，商品名称保留原样。
 回答当前销售数据的问题必须使用可用工具，以本轮或历史工具证据为依据，不编造数字、趋势或原因。
@@ -77,8 +78,8 @@ class AgentSession:
                     tool_start = time.perf_counter()
                     result = self.registry.execute(call.name, call.arguments)
                     try:
-                        arguments = json.loads(call.arguments)
-                    except (ValueError, TypeError):
+                        arguments = parse_arguments(call.arguments)
+                    except (ValueError, TypeError, RecursionError):
                         arguments = {"invalid_json": True}
                     traces.append({"name": call.name, "arguments": arguments, "result": result,
                                    "success": "error" not in result,

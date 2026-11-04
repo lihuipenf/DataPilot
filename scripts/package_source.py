@@ -3,7 +3,10 @@ from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
 import zipfile
-from dotenv import dotenv_values
+try:
+    from .check_secrets import configured_secrets, check_content, FORBIDDEN
+except ImportError:  # 同时支持 python scripts/package_source.py 和模块入口。
+    from check_secrets import configured_secrets, check_content, FORBIDDEN
 
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_FILES = {"app.py", "api_test.py", "main.py", "sales_tools.py", "check_tools.py", "sales.csv",
@@ -19,13 +22,16 @@ def package():
         if not path.is_file():
             continue
         relative = path.relative_to(ROOT)
+        if any(part in FORBIDDEN for part in relative.parts) or (path.name.startswith('.env') and path.name != '.env.example'):
+            continue
         if relative.parts[0] in ROOT_FILES or (relative.parts[0] in FOLDERS and path.suffix in EXTENSIONS and "__pycache__" not in relative.parts):
+            if path.is_symlink() or not path.resolve().is_relative_to(ROOT.resolve()):
+                raise RuntimeError("源码包不接受指向外部文件的链接。")
             files.append(path)
     # 仅读入本地密钥做包含性检查，不打印、不写入任何归档或报告。
-    secret = (dotenv_values(ROOT / ".env").get("DEEPSEEK_API_KEY") or "").strip().encode()
+    secrets = configured_secrets(ROOT)
     for path in files:
-        if secret and secret in path.read_bytes():
-            raise RuntimeError("检测到源码材料含本地密钥，停止打包。")
+        check_content(path.read_bytes(),path.relative_to(ROOT),secrets)
     output = ROOT / "dist"
     output.mkdir(exist_ok=True)
     archive = output / ("DataPilot-source-" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".zip")

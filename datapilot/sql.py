@@ -1,8 +1,11 @@
 """只读SQL执行边界：独立内存数据、授权回调、时间/行数/长度限制。"""
 import math
+import json
 import sqlite3
 import threading
 import time
+
+MAX_RESULT_BYTES = 256 * 1024
 
 SAFE_FUNCTIONS = {"sum", "total", "count", "avg", "min", "max", "round", "abs", "coalesce", "ifnull", "nullif",
                   "lower", "upper", "length", "substr", "substring", "trim", "ltrim", "rtrim", "replace",
@@ -54,9 +57,17 @@ class ReadOnlySql:
                 columns = [column[0] for column in cursor.description]
                 if len(set(columns)) != len(columns):
                     raise ValueError("结果列名重复，请使用不同的 AS 别名。")
-                fetched = cursor.fetchmany(limit + 1)
                 rows = []
-                for row in fetched[:limit]:
+                result_bytes = len(json.dumps(columns, ensure_ascii=False).encode('utf-8'))
+                truncated = False
+                # 一行一验，不能先分配整批结果再检查字段大小。
+                for index in range(limit + 1):
+                    row = cursor.fetchone()
+                    if row is None:
+                        break
+                    if index == limit:
+                        truncated = True
+                        break
                     for value in row:
                         if isinstance(value, bytes):
                             raise ValueError("SQL结果包含不支持的BLOB二进制字段，请转换为文本或数值。")
@@ -64,9 +75,13 @@ class ReadOnlySql:
                             raise ValueError("SQL结果包含非有限数值，请检查计算表达式。")
                         if isinstance(value, (str, bytes)) and len(value) > 2000:
                             raise ValueError("单个结果字段过长，请缩小查询范围。")
-                    rows.append(dict(zip(columns, row)))
+                    item = dict(zip(columns, row))
+                    result_bytes += len(json.dumps(item, ensure_ascii=False, allow_nan=False).encode('utf-8'))
+                    if result_bytes > MAX_RESULT_BYTES:
+                        raise ValueError("SQL结果总大小超过256 KiB，请减少字段或返回行数。")
+                    rows.append(item)
                 return {"sql": sql, "parameters": parameters or [], "columns": columns, "rows": rows, "row_count": len(rows),
-                        "truncated": len(fetched) > limit, "execution_ms": round((time.perf_counter() - started) * 1000)}
+                        "truncated": truncated, "execution_ms": round((time.perf_counter() - started) * 1000)}
             except (sqlite3.Error, ValueError, TypeError, OverflowError) as error:
                 timeout = time.perf_counter() >= deadline or "interrupted" in str(error).lower()
                 if timeout:
@@ -74,6 +89,8 @@ class ReadOnlySql:
                 return {"error": "只允许查询当前 sales 表及受支持的函数。请检查SQL语法、列名和参数。" if isinstance(error, sqlite3.Error) else str(error),
                         "code": "sql_rejected"}
             finally:
+                if 'cursor' in locals():
+                    cursor.close()
                 self.connection.set_progress_handler(None, 0)
 
     def close(self):

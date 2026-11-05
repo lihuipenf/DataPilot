@@ -86,6 +86,8 @@ class LocalSecurityMiddleware:
             buffered_receive = replay
             media = headers.get('content-type','').split(';',1)[0].strip().lower()
             is_json = media == 'application/json' or (media.startswith('application/') and media.endswith('+json'))
+            if not upload and body and not is_json:
+                return await reject(415,'此接口的非空请求体必须使用 application/json。')
             if not upload and body and is_json:
                 try:
                     # 拒绝过深JSON和转义的孤立代理字符，避免解析或UTF-8输出时异常。

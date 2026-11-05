@@ -8,6 +8,7 @@ from .config import ROOT
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_ROWS = 50000
+MAX_COLUMNS = 64
 REQUIRED = ["date", "product", "quantity", "unit_price"]
 
 
@@ -78,14 +79,19 @@ def load_sales(source=None):
     try:
         reader = csv.reader(io.StringIO(text), strict=True)
         header = next(reader)
+        if len(header) > MAX_COLUMNS:
+            raise DataError(f"CSV 最多支持 {MAX_COLUMNS} 列，请移除不需要的列。")
         if len(set(header)) != len(header):
             raise DataError("CSV 存在重复列名。")
+        missing = [name for name in REQUIRED if name not in header]
+        if missing:
+            raise DataError("缺少必要列：" + "、".join(missing))
         for row in reader:
             if row and len(row) != len(header):
                 raise DataError(f"CSV 第{reader.line_num}行的列数与表头不一致。")
         # 商品编号是标识符，不推断为数字；NA/null等文字也可能是合法商品名。
         frame = pd.read_csv(io.StringIO(text), nrows=MAX_ROWS + 1,
-                            dtype={"product":str}, keep_default_na=False)
+                            usecols=REQUIRED, dtype={"product":str}, keep_default_na=False)
     except (pd.errors.ParserError, pd.errors.EmptyDataError, StopIteration, csv.Error) as error:
         raise DataError("CSV 格式不正确，请检查表头、逗号和引号。") from error
     return validate_sales(frame)

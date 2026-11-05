@@ -123,6 +123,8 @@ The [detailed setup guide](docs/getting-started.md) covers first-run checks, PyC
 
 This is a single-user local project, not a public multi-tenant service. SQL uses a separate in-memory `sales` table, an authorizer and function allowlist, row/time limits and no external-file access. This is not an arbitrary-code sandbox. Data must follow the documented sales CSV contract; currency and independent order identity are not inferred.
 
+CSV uploads allow at most 64 columns; only the four required business columns are parsed by Pandas. SQL checks fields as rows are fetched, with a 256 KiB UTF-8 JSON budget for result rows and column names. Exported reports show questions and model answers in literal code blocks and escape other untrusted text, preventing it from becoming HTML or external images. Nonempty API bodies must use a JSON media type, except for raw CSV uploads.
+
 See [evaluation records](docs/evaluation.md) for actual results and limitations. Offline rules scores, unit tests and live model evaluation are different forms of evidence. Small fixed-dataset results do not establish production accuracy. Model requests in live mode send questions, necessary history and tool evidence to the configured provider.
 
 The repository is private during development. Runtime datasets, state databases, keys, virtual environments and generated output directories are excluded from version control.

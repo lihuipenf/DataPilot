@@ -56,7 +56,7 @@ class ProtocolTests(unittest.TestCase):
                     {"type":"tool_use","id":"a","name":"get_total_sales","input":{}},
                     {"type":"tool_use","id":"b","name":"get_top_product","input":{}}],"usage":{}})
             return httpx.Response(200,json={"stop_reason":"end_turn","content":[{"type":"text","text":"总额1350，Monitor为800。"}],"usage":{}})
-        with httpx.Client(transport=httpx.MockTransport(handler)) as client, patch("httpx.post",side_effect=client.post):
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client, patch("httpx.post",side_effect=lambda *a,**kw: client.post(*a,**{k:v for k,v in kw.items() if k!="trust_env"})):
             settings=Settings(provider="anthropic",api_key="key",model="test",base_url="https://example.test/v1",max_tool_rounds=1)
             result=AgentSession(registry(),models.create_gateway(settings),settings).ask("总额和冠军？")
         self.assertEqual(len(result.traces),2)
@@ -70,7 +70,7 @@ class ProtocolTests(unittest.TestCase):
             def handler(request):
                 requests.append(request)
                 return httpx.Response(status,json={"error":{"message":"private-key-in-upstream-error"}})
-            with self.subTest(status=status), httpx.Client(transport=httpx.MockTransport(handler)) as client, patch("httpx.post",side_effect=client.post), patch("datapilot.models.time.sleep"):
+            with self.subTest(status=status), httpx.Client(transport=httpx.MockTransport(handler)) as client, patch("httpx.post",side_effect=lambda *a,**kw: client.post(*a,**{k:v for k,v in kw.items() if k!="trust_env"})), patch("datapilot.models.time.sleep"):
                 gateway=models.create_gateway(Settings(provider="anthropic",api_key="private-key",model="test"))
                 with self.assertRaises(models.ModelError) as caught:
                     gateway.complete([{"role":"user","content":"你好"}],[])
@@ -88,8 +88,9 @@ class ProtocolTests(unittest.TestCase):
         settings = Settings(api_key="test-secret", provider=provider, model="test-model",
                             base_url="https://example.test/v1")
         def openai_client(**kwargs):
+            kwargs.pop('http_client').close()
             return OpenAI(**kwargs,http_client=client)
-        with patch("openai.OpenAI", side_effect=openai_client), patch("httpx.post",side_effect=client.post):
+        with patch("openai.OpenAI", side_effect=openai_client), patch("httpx.post",side_effect=lambda *a,**kw: client.post(*a,**{k:v for k,v in kw.items() if k!="trust_env"})):
             agent = AgentSession(registry(),models.create_gateway(settings),settings)
             result = agent.ask("总销售额是多少？")
         return result, agent
@@ -150,7 +151,7 @@ class ProviderWebTests(unittest.TestCase):
         with patch.dict(os.environ,{"OPENAI_API_KEY":"test-secret","OPENAI_MODEL":"gpt-5.3-codex"},clear=True), patch("datapilot.config.load_dotenv"):
             from dataclasses import replace
             settings=replace(Settings.from_env(),state_path=path)
-        with TestClient(create_app(settings)) as client:
+        with TestClient(create_app(settings), base_url="http://localhost") as client:
             result=client.post("/api/sessions",json={"mode":"live","provider":"openai","model":"gpt-5.3-codex"})
             self.assertEqual(result.status_code,200,result.text)
             identifier=result.json()["id"]
@@ -160,7 +161,7 @@ class ProviderWebTests(unittest.TestCase):
             self.assertEqual(saved["model"],"gpt-5.3-codex")
             self.assertNotIn("test-secret",client.get("/api/providers").text)
             self.assertEqual(client.post("/api/sessions",json={"mode":"live","provider":"anthropic"}).status_code,400)
-        with TestClient(create_app(Settings(state_path=path))) as client:
+        with TestClient(create_app(Settings(state_path=path)), base_url="http://localhost") as client:
             restored=client.get(f"/api/sessions/{identifier}")
             self.assertEqual(restored.json()["provider"],"openai")
             self.assertEqual(restored.json()["model"],"gpt-5.3-codex")
@@ -171,7 +172,7 @@ class ProviderWebTests(unittest.TestCase):
     def test_invalid_provider_returns_readable_client_error(self):
         from fastapi.testclient import TestClient
         from datapilot.web import create_app
-        with TestClient(create_app(Settings())) as client:
+        with TestClient(create_app(Settings()), base_url="http://localhost") as client:
             response=client.post("/api/sessions",json={"mode":"live","provider":"unknown"})
             self.assertEqual(response.status_code,400)
 

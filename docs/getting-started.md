@@ -56,7 +56,7 @@ $env:MPLCONFIGDIR = Join-Path (Get-Location).Path ".cache\matplotlib"
 .\.venv\Scripts\python.exe app.py
 ```
 
-字体缓存放在项目 `.cache` 下，适用于没有D盘的电脑。这个环境变量只影响当前终端，后续新开终端运行时可再次设置。项目保留的 `start_datapilot.ps1` 使用作者的D盘缓存布局；通用安装使用本节命令。
+字体缓存默认放在项目 `.cache` 下，适用于没有D盘的电脑；上面的显式设置也可继续使用。`start_datapilot.ps1` 现尊重已有进程环境变量，未设置的缓存使用项目目录。若PowerShell禁止脚本，直接使用本节Python命令，无需调整执行策略。
 
 无需执行 `Activate.ps1`，也无需更改PowerShell执行策略。不要把 `import pandas` 等Python代码直接输入到 `PS>` 提示符中；代码写入 `.py` 文件，用Python运行。
 

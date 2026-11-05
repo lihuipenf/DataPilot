@@ -5,6 +5,31 @@ import time
 from .config import Settings
 from .models import ModelError
 from .tools import parse_arguments
+from .budget import check_turn, turn_scope
+
+
+def bounded_result(result, max_chars):
+    """保留完整行及截断标记，不能把任意JSON字符串切成无效片段。"""
+    def size(value):
+        return len(json.dumps(value,ensure_ascii=False,allow_nan=False))
+    if size(result) <= max_chars:
+        return result
+    for key in ('rows','ranking','daily_sales','tied_products'):
+        if isinstance(result.get(key),list):
+            items=result[key]
+            def prefix(count):
+                output={**result,key:items[:count],'truncated':True}
+                if key=='rows':output['row_count']=count
+                if key=='tied_products':output['tied_products_truncated']=True
+                return output
+            low,high=0,len(items)
+            while low<high:
+                mid=(low+high+1)//2
+                if size(prefix(mid))<=max_chars:low=mid
+                else:high=mid-1
+            if low and size(prefix(low))<=max_chars:
+                return prefix(low)
+    return {'error':'结果超过本轮上下文预算，请减少返回行数、字段或缩小日期范围。','code':'result_limit'}
 
 SYSTEM_PROMPT = """你是 DataPilot，一名销售数据分析助手。始终用简体中文回答，商品名称保留原样。
 回答当前销售数据的问题必须使用可用工具，以本轮或历史工具证据为依据，不编造数字、趋势或原因。
@@ -45,13 +70,23 @@ class AgentSession:
         while True:
             outgoing = ([{"role": "system", "content": SYSTEM_PROMPT}]
                         + [message for turn in previous for message in turn] + current)
-            if len(json.dumps(outgoing, ensure_ascii=False)) <= self.settings.max_context_chars:
+            if len(json.dumps({'messages':outgoing,'tools':self.registry.schemas()}, ensure_ascii=False)) <= self.settings.max_context_chars:
                 return outgoing
             if not previous:
                 raise ModelError("context_limit", "本轮结果超出上下文预算，请缩小日期范围、减少排名数量或拆分问题。")
             previous = previous[1:]
 
-    def ask(self, question):
+    def close(self):
+        self.registry.close()
+        close = getattr(self.gateway,'close',None)
+        if close:
+            close()
+
+    def ask(self, question, cancelled=None):
+        with turn_scope(self.settings.turn_timeout,cancelled):
+            return self._ask(question)
+
+    def _ask(self, question):
         question = question.strip()
         if not question or len(question) > 2000:
             raise ValueError("问题不能为空，且最多 2000 个字符。")
@@ -61,8 +96,10 @@ class AgentSession:
         usage = {"prompt_tokens": 0, "completion_tokens": 0}
         requests, calls = 0, 0
         for step in range(self.settings.max_tool_rounds + 1):
+            check_turn()
             allow = step < self.settings.max_tool_rounds and calls < self.settings.max_tool_calls
             reply = self.gateway.complete(self._request_messages(current), self.registry.schemas(), allow_tools=allow)
+            check_turn()
             requests += 1
             for key in usage:
                 usage[key] += reply.usage.get(key, 0)
@@ -73,10 +110,16 @@ class AgentSession:
                 if len(set(ids)) != len(ids) or any(not value for value in ids):
                     raise ModelError("invalid_tool_call", "模型返回了无效的工具调用，请重试。")
                 current.append(reply.as_message())
-                for call in reply.tool_calls:
+                for index,call in enumerate(reply.tool_calls):
+                    check_turn()
                     calls += 1
                     tool_start = time.perf_counter()
                     result = self.registry.execute(call.name, call.arguments)
+                    base=[{'role':'system','content':SYSTEM_PROMPT}]+current
+                    used=len(json.dumps({'messages':base,'tools':self.registry.schemas()},ensure_ascii=False))
+                    # 留出其余工具的错误/元数据空间，并考虑JSON字符串二次编码。
+                    available=(self.settings.max_context_chars-used-512*(len(reply.tool_calls)-index)-256)//2
+                    result=bounded_result(result,min(self.settings.max_tool_result_chars,max(256,available)))
                     try:
                         arguments = parse_arguments(call.arguments)
                     except (ValueError, TypeError, RecursionError):

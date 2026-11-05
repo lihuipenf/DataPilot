@@ -60,7 +60,12 @@ def load_sales(source=None):
     if isinstance(source, pd.DataFrame):
         return validate_sales(source)
     try:
-        raw = source if isinstance(source, bytes) else Path(source or ROOT / "sales.csv").read_bytes()
+        if isinstance(source, bytes):
+            raw = source
+        else:
+            # 有界读取也覆盖stat与读取之间文件增长的情况。
+            with Path(source or ROOT / "sales.csv").open('rb') as stream:
+                raw = stream.read(MAX_BYTES + 1)
     except OSError as error:
         raise DataError("无法读取 CSV 文件，请检查文件路径和访问权限。") from error
     if len(raw) > MAX_BYTES:

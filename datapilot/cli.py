@@ -19,7 +19,9 @@ def main():
         settings = Settings.from_env().select(args.provider, args.model)
         frame = load_sales(args.csv)
         gateway = DemoGateway(frame["product"].unique()) if args.demo else create_gateway(settings)
-        session = AgentSession(ToolRegistry(frame, settings.output_dir / "cli"), gateway, settings)
+        session = AgentSession(ToolRegistry(frame, settings.output_dir / "cli",
+                               max_session_charts=settings.max_session_charts,
+                               max_chart_bytes=settings.max_chart_bytes,artifact_root=settings.output_dir), gateway, settings)
     except (DataError, ModelError, ValueError) as error:
         print("无法启动：", error)
         return
@@ -45,3 +47,4 @@ def main():
         except (ModelError, ValueError) as error:
             print("本次分析未完成：", error)
             print("可以修改问题后继续提问。")
+    session.close()

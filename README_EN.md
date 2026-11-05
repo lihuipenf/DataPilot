@@ -121,7 +121,13 @@ The [detailed setup guide](docs/getting-started.md) covers first-run checks, PyC
 
 ## Boundaries and evidence
 
+See the [v1.3 hardening record](docs/security-hardening-v1.3.md) for the audit dispositions. Remote model endpoints require HTTPS; plain HTTP is restricted to loopback addresses. HTTP clients ignore proxy/CA environment settings by default; explicitly set `DATAPILOT_TRUST_ENV=true` for a trusted enterprise proxy or custom CA.
+
 This is a single-user local project, not a public multi-tenant service. SQL uses a separate in-memory `sales` table, an authorizer and function allowlist, row/time limits and no external-file access. This is not an arbitrary-code sandbox. Data must follow the documented sales CSV contract; currency and independent order identity are not inferred.
+
+There is no user authentication. Other local processes can access the API. Use `-p 127.0.0.1:8765:8765` for manual Docker publishing; the container must still listen on `0.0.0.0` internally. Shared-host or external deployment requires an authenticated gateway. The mode API now returns a new session ID and preserves the old session.
+
+Defaults: 200 saved sessions, 100 charts per session, 256 MiB of PNGs across the output directory. Limits reject new writes without deleting existing data. Model messages and tool schemas share a 24,000-character budget; tool output is capped at 8,000 characters with complete-row truncation. A cooperative 120-second turn budget and Stop button prevent further steps or history commits after cancellation. They do not forcibly interrupt an in-flight synchronous request, lock wait, or trickling response.
 
 CSV uploads allow at most 64 columns; only the four required business columns are parsed by Pandas. SQL checks fields as rows are fetched, with a 256 KiB UTF-8 JSON budget for result rows and column names. Exported reports show questions and model answers in literal code blocks and escape other untrusted text, preventing it from becoming HTML or external images. Nonempty API bodies must use a JSON media type, except for raw CSV uploads.
 

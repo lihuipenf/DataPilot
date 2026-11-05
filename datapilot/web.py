@@ -1,6 +1,6 @@
 """本地 FastAPI 服务。浏览器不接触 API Key，每个会话独立维护数据和历史。"""
 from dataclasses import asdict, dataclass, field
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from pathlib import Path
 import re
 import threading
@@ -51,47 +51,91 @@ class Record:
     touched: float = field(default_factory=time.monotonic)
     lock: threading.Lock = field(default_factory=threading.Lock)
     pins: int = 0
+    cancelled: threading.Event = field(default_factory=threading.Event)
+    analysing: bool = False
 
 
 def create_app(settings=None):
     settings = settings or Settings.from_env()
+    records, store_lock, pending = {}, threading.RLock(), set()
+
+    @asynccontextmanager
+    async def lifespan(app):
+        try:
+            yield
+        finally:
+            with store_lock:
+                closing = list(records.values())
+                records.clear()
+            for record in closing:
+                record.cancelled.set()
+                await run_in_threadpool(record.agent.close)
+
     # 保留OpenAPI JSON；自动文档依赖外部CDN/内联脚本，与本地CSP不兼容。
-    app = FastAPI(title="DataPilot", version="1.2.1", docs_url=None, redoc_url=None)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver", "[::1]"])
+    app = FastAPI(title="DataPilot", version="1.3.0", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
     app.add_middleware(LocalSecurityMiddleware)
-    records, store_lock = {}, threading.RLock()
-    store = SessionStore(settings.state_path) if settings.state_path else None
+    store = SessionStore(settings.state_path, settings.max_saved_sessions) if settings.state_path else None
     app.state.records = records
+
+    def reserve(identifier, already_pending=False):
+        """仅在短临界区内预留缓存槽；IO、解析和关闭连接均在锁外。"""
+        with store_lock:
+            retired = None
+            if len(records) + len(pending) + (0 if already_pending else 1) > 32:
+                idle = sorted((r for r in records.values() if r.pins == 0 and not r.lock.locked()
+                               and (store or time.monotonic()-r.touched>7200)),key=lambda r:r.touched)
+                if not idle:
+                    raise HTTPException(429,'活跃分析过多，请稍后重试。')
+                retired=records.pop(idle[0].id)
+            pending.add(identifier)
+        if retired:
+            retired.agent.close()
 
     def get_record(session_id):
         with store_lock:
-            record = records.get(session_id)
-            if record is None and store:
-                payload = store.load(session_id)
-                if payload:
-                    frame = load_sales(pd.DataFrame(payload["data"]))
-                    agent = new_agent(frame, payload["mode"], session_id, restored=True,
-                                      provider=payload.get("provider", "deepseek"), model=payload.get("model"))
-                    agent.turns = payload["history"]
-                    record = Record(session_id, payload["mode"], agent, filename=payload["filename"],
-                                    results=[(item["question"], TurnResult(**item["result"])) for item in payload["results"]])
-                    if len(records) >= 32:
-                        idle = sorted((r for r in records.values() if r.pins == 0 and not r.lock.locked()),key=lambda r:r.touched)
-                        if not idle:
-                            raise HTTPException(429,"活跃分析过多，请稍后恢复会话。")
-                        records.pop(idle[0].id)
-                    records[session_id] = record
-            if record is None:
+            record=records.get(session_id)
+            if record:
+                record.pins += 1
+                record.touched=time.monotonic()
+                return record
+            if not store:
                 raise HTTPException(404, "会话不存在或已过期，请新建会话。")
-            record.touched = time.monotonic()
-            return record
+            if session_id in pending:
+                raise HTTPException(409,'当前会话正在恢复，请稍后重试。')
+            if len(pending) >= 32:
+                raise HTTPException(429,'恢复请求过多，请稍后重试。')
+            # reserve只操作内存；外层RLock在读取数据库前释放。
+            # 不在这里调用reserve，避免在外层锁内关闭被淘汰连接。
+            pending.add(session_id)
+        candidate=None
+        try:
+            payload=store.load(session_id)
+            if not payload:
+                raise HTTPException(404,'会话不存在或已过期，请新建会话。')
+            frame=load_sales(pd.DataFrame(payload['data']))
+            agent=new_agent(frame,payload['mode'],session_id,restored=True,
+                            provider=payload.get('provider','deepseek'),model=payload.get('model'))
+            agent.turns=payload['history']
+            candidate=Record(session_id,payload['mode'],agent,filename=payload['filename'],
+                             results=[(item['question'],TurnResult(**item['result'])) for item in payload['results']])
+            reserve(session_id,already_pending=True)
+            with store_lock:
+                records[session_id]=candidate
+                candidate.pins=1
+            return candidate
+        except BaseException:
+            if candidate:
+                candidate.agent.close()
+            raise
+        finally:
+            with store_lock:
+                pending.discard(session_id)
 
     @contextmanager
     def use_record(session_id):
         # 在释放缓存锁前固定对象生命周期，等待会话锁时也不能被淘汰。
-        with store_lock:
-            record = get_record(session_id)
-            record.pins += 1
+        record = get_record(session_id)
         acquired = False
         try:
             acquired = record.lock.acquire(blocking=False)
@@ -110,7 +154,9 @@ def create_app(settings=None):
         except ValueError as error:
             raise HTTPException(400, str(error)) from error
         registry = ToolRegistry(frame, settings.output_dir / session_id,
-                                f"/api/sessions/{session_id}/artifacts")
+                                f"/api/sessions/{session_id}/artifacts",
+                                max_session_charts=settings.max_session_charts,
+                                max_chart_bytes=settings.max_chart_bytes,artifact_root=settings.output_dir)
         if mode == "live":
             gateway = create_gateway(selected, restored=restored)
         else:
@@ -136,7 +182,8 @@ def create_app(settings=None):
 
     @app.exception_handler(ModelError)
     async def model_error(request, error):
-        return JSONResponse(status_code=400 if error.code in ("missing_key", "invalid_config") else 502,
+        return JSONResponse(status_code=400 if error.code in ("missing_key", "invalid_config", "context_limit") else
+                            408 if error.code=='turn_timeout' else 409 if error.code=='cancelled' else 502,
                             content={"detail": str(error), "code": error.code})
 
     @app.exception_handler(DataError)
@@ -150,7 +197,7 @@ def create_app(settings=None):
     @app.get("/api/health")
     def health():
         return {"status": "ok", "model": settings.model, "live_available": bool(settings.api_key),
-                "provider":settings.provider, "version": "1.2.1", "persistence":store is not None}
+                "provider":settings.provider, "version": "1.3.0", "persistence":store is not None}
 
     @app.get("/api/providers")
     def providers():
@@ -179,25 +226,26 @@ def create_app(settings=None):
         if body.source_session_id:
             with use_record(body.source_session_id) as source:
                 frame, filename = source.agent.registry.frame.copy(), source.filename
+                provider=body.provider or source.agent.settings.provider
+                model=body.model if body.model is not None else (source.agent.settings.model if provider==source.agent.settings.provider else None)
         else:
             frame, filename = load_sales(), "sales.csv"
+            provider,model=body.provider,body.model
         record = Record(identifier, body.mode, new_agent(frame, body.mode, identifier,
-                        provider=body.provider, model=body.model), filename=filename)
-        with store_lock:
-            # 只清理过期的内存会话，保留所有已生成文件。
-            expired = [key for key, value in records.items() if time.monotonic() - value.touched > 7200 and value.pins == 0 and not value.lock.locked()]
-            for key in expired:
-                records.pop(key)
-            if store and len(records) >= 32:
-                idle = sorted((r for r in records.values() if r.pins == 0 and not r.lock.locked()),key=lambda r:r.touched)
-                if idle:
-                    records.pop(idle[0].id)
-            if len(records) >= 32:
-                raise HTTPException(429, "当前会话数量已达上限，请稍后重试或重启本地服务。")
+                        provider=provider, model=model), filename=filename)
+        try:
+            reserve(identifier)
             persist(record)
             result = snapshot(record)
-            records[identifier] = record
-        return result
+            with store_lock:
+                records[identifier] = record
+            return result
+        except BaseException:
+            record.agent.close()
+            raise
+        finally:
+            with store_lock:
+                pending.discard(identifier)
 
     @app.get("/api/sessions/{session_id}")
     def read_session(session_id: str):
@@ -206,27 +254,31 @@ def create_app(settings=None):
 
     @app.post("/api/sessions/{session_id}/mode")
     def change_mode(session_id: str, body: SessionInput):
-        if body.mode not in ["demo", "live"]:
-            raise HTTPException(400, "模式应为 demo 或 live。")
-        with use_record(session_id) as record:
-            # 先构造成功再替换，切换失败时仍保留原数据与历史。
-            agent = new_agent(record.agent.registry.frame, body.mode, record.id,
-                              provider=body.provider or record.agent.settings.provider,
-                              model=body.model if body.model is not None else
-                              (record.agent.settings.model if body.provider in (None, record.agent.settings.provider) else None))
-            persist(Record(record.id,body.mode,agent,filename=record.filename))
-            record.agent, record.mode = agent, body.mode
-            record.results.clear()
-            return snapshot(record)
+        return create_session(CreateSessionInput(**body.model_dump(),source_session_id=session_id))
+
+    @app.post('/api/sessions/{session_id}/cancel')
+    def cancel(session_id: str):
+        with store_lock:
+            record=records.get(session_id)
+            if record is None:
+                raise HTTPException(404,'当前没有可停止的分析。')
+            if not record.analysing:
+                raise HTTPException(409,'当前没有正在运行的分析，请稍后重试。')
+            record.cancelled.set()
+        return {'status':'cancelling'}
 
     @app.post("/api/sessions/{session_id}/chat")
     def chat(session_id: str, body: ChatInput):
         with use_record(session_id) as record:
             old_turns, old_results = list(record.agent.turns), list(record.results)
+            record.cancelled.clear()
+            record.analysing=True
             try:
-                result = record.agent.ask(body.question)
+                result = record.agent.ask(body.question,cancelled=record.cancelled)
             except ValueError as error:
                 raise HTTPException(400, str(error)) from error
+            finally:
+                record.analysing=False
             record.results.append((body.question.strip(), result))
             # 保留最近50条展示记录，模型上下文另按完整轮次限制。
             record.results = record.results[-50:]
@@ -237,16 +289,23 @@ def create_app(settings=None):
                 raise
             return asdict(result)
 
-    async def replace_dataset(record, content, filename):
+    def replace_dataset(session_id, content, filename):
         # 调用方持有会话租约；先校验和持久化，再原子替换活动状态。
-        frame = await run_in_threadpool(load_sales, content)
-        agent = new_agent(frame, record.mode, record.id, provider=record.agent.settings.provider,
-                          model=record.agent.settings.model)
-        persist(Record(record.id,record.mode,agent,filename=filename))
-        record.agent = agent
-        record.filename = filename
-        record.results.clear()
-        return snapshot(record)
+        with use_record(session_id) as record:
+            frame = load_sales(content)
+            agent = new_agent(frame, record.mode, record.id, provider=record.agent.settings.provider,
+                              model=record.agent.settings.model)
+            try:
+                persist(Record(record.id,record.mode,agent,filename=filename))
+            except BaseException:
+                agent.close()
+                raise
+            old=record.agent
+            record.agent = agent
+            record.filename = filename
+            record.results.clear()
+            old.close()
+            return snapshot(record)
 
     @app.post("/api/sessions/{session_id}/dataset")
     async def upload(session_id: str, request: Request):
@@ -255,16 +314,15 @@ def create_app(settings=None):
             body.extend(chunk)
             if len(body) > MAX_BYTES:
                 raise HTTPException(413, "CSV 文件不能超过5 MB。")
-        filename = unquote(request.headers.get("x-filename", "uploaded.csv")).replace("\\", "/").split("/")[-1][:120]
+        filename = unquote(request.headers.get("x-filename", "uploaded.csv")).replace("\\", "/").split("/")[-1]
+        filename = ''.join(c for c in filename if c.isprintable())[:120]
         if not filename.lower().endswith(".csv"):
             raise HTTPException(400, "请选择 .csv 文件。")
-        with use_record(session_id) as record:
-            return await replace_dataset(record, bytes(body), filename)
+        return await run_in_threadpool(replace_dataset,session_id,bytes(body),filename)
 
     @app.post("/api/sessions/{session_id}/dataset/default")
-    async def default_dataset(session_id: str):
-        with use_record(session_id) as record:
-            return await replace_dataset(record, (ROOT / "sales.csv").read_bytes(), "sales.csv")
+    def default_dataset(session_id: str):
+        return replace_dataset(session_id,None,'sales.csv')
 
     @app.post("/api/sessions/{session_id}/reset")
     def reset(session_id: str):
@@ -276,6 +334,7 @@ def create_app(settings=None):
             except StorageError:
                 record.agent.turns, record.results = old_turns, old_results
                 raise
+            record.agent.registry.close()
             return snapshot(record)
 
     @app.get("/api/sessions/{session_id}/export.md")

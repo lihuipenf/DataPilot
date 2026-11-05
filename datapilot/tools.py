@@ -3,6 +3,7 @@ from datetime import date
 import json
 from pathlib import Path
 import threading
+import io
 from typing import Literal
 from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -68,11 +69,20 @@ SPECS = {
 
 
 class ToolRegistry:
-    def __init__(self, frame, output_dir, artifact_prefix="/api/artifacts"):
+    def __init__(self, frame, output_dir, artifact_prefix="/api/artifacts", *, max_session_charts=100,
+                 max_chart_bytes=256*1024*1024, artifact_root=None):
         self.frame = frame
         self.output_dir = Path(output_dir)
         self.artifact_prefix = artifact_prefix
         self._sql = None
+        self.max_session_charts = max_session_charts
+        self.max_chart_bytes = max_chart_bytes
+        self.artifact_root = Path(artifact_root) if artifact_root else self.output_dir
+
+    def close(self):
+        if self._sql is not None:
+            self._sql.close()
+            self._sql = None
 
     @property
     def sql_engine(self):
@@ -182,6 +192,11 @@ class ToolRegistry:
         from matplotlib.backends.backend_agg import FigureCanvasAgg
         from matplotlib import font_manager
         with CHART_LOCK:
+            if len(list(self.output_dir.glob('*.png'))) >= self.max_session_charts:
+                raise ValueError('已达当前会话的图表配额；已有图表保留，可调整 DATAPILOT_MAX_SESSION_CHARTS。')
+            used = sum(path.stat().st_size for path in self.artifact_root.rglob('*.png') if path.is_file())
+            if used >= self.max_chart_bytes:
+                raise ValueError('图表存储空间已达配额，请备份后调整 DATAPILOT_MAX_CHART_BYTES。')
             fig = Figure(figsize=(9, 4.8), dpi=140, facecolor="#ffffff", layout="constrained")
             FigureCanvasAgg(fig)
             ax = fig.subplots()
@@ -208,7 +223,16 @@ class ToolRegistry:
                 label.set_fontname(font)
             self.output_dir.mkdir(parents=True, exist_ok=True)
             filename = uuid4().hex + ".png"
-            fig.savefig(self.output_dir / filename)
-            fig.clear()
+            try:
+                buffer = io.BytesIO()
+                fig.savefig(buffer, format='png')
+                content = buffer.getvalue()
+                if used + len(content) > self.max_chart_bytes:
+                    raise ValueError('本次图表将超过存储配额；未写入文件，已有产物保留。')
+                from .budget import check_turn
+                check_turn()
+                (self.output_dir / filename).write_bytes(content)
+            finally:
+                fig.clear()
         return {"chart_kind": kind, "artifact": {"id": filename, "kind": "chart", "mime_type": "image/png",
                 "url": self.artifact_prefix + "/" + filename}, "displayed_points": len(values)}

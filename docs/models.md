@@ -35,7 +35,9 @@ ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
 
 真实评测会产生API费用。每个服务商都应分别跑题集，不能把DeepSeek历史分数当作Claude或Codex的效果。
 
-`DATAPILOT_PROVIDER` 控制默认服务（未设时deepseek），`DATAPILOT_TIMEOUT` 控制单次请求超时1～120秒，兼容旧 `DEEPSEEK_TIMEOUT`。每个模型步骤至多两次HTTP尝试，总工具步数有界。OpenAI/Claude最大输出4096 tokens，DeepSeek/兼容接口900；当前没有流式输出和取消机制。
+`DATAPILOT_PROVIDER` 控制默认服务（未设时deepseek），`DATAPILOT_TIMEOUT` 控制单次请求超时1～120秒，兼容旧 `DEEPSEEK_TIMEOUT`。每个模型步骤至多两次HTTP尝试，总工具步数有界。OpenAI/Claude最大输出4096 tokens，DeepSeek/兼容接口900。当前没有流式输出；网页支持协作式停止，默认整轮预算120秒。预算在步骤边界检查，不保证立即中断正在进行的同步网络请求或锁等待。
+
+远程服务地址必须使用HTTPS；HTTP仅允许localhost、127.0.0.0/8和::1等回环IP。私有局域网地址也不能明文发送密钥。空的BASE_URL使用该服务默认值；无效数字配置会指出配置项。HTTP客户端默认 `DATAPILOT_TRUST_ENV=false`，不自动读取环境代理或CA设置；需要可信企业代理/自定义CA时显式设true并重启。
 
 `INPUT_PRICE_PER_MILLION` / `OUTPUT_PRICE_PER_MILLION` 只属于默认配置的模型；改选其他服务或模型时不继承价格，避免错误估算。Token采用服务返回值；缓存计费、重试及账单并不完全等价。
 

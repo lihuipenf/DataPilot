@@ -10,3 +10,14 @@ __pycache__
 .cache
 outputs
 dist
+*.sqlite*
+*.db
+*.csv
+**/*.sqlite*
+**/*.db
+**/*.csv
+!sales.csv
+!examples/retail_weekly.csv
+!examples/promotion_review.csv
+!examples/data_boundaries.csv
+!docs/screenshots/browser-summary.csv

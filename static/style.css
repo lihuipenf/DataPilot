@@ -346,6 +346,7 @@ h1 {
   margin-bottom: 27px;
 }
 .metric {
+  min-width: 0;
   padding: 20px 21px;
   background: white;
   border: 1px solid var(--line);
@@ -612,13 +613,21 @@ kbd {
   margin-bottom: 18px;
 }
 .rank-label {
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   font-size: 10px;
   color: #63796b;
   margin-bottom: 7px;
 }
+.rank-label > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rank-label strong {
+  flex-shrink: 0;
   font-weight: 500;
   color: #46624f;
 }

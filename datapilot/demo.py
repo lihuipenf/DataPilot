@@ -71,7 +71,9 @@ class DemoGateway:
             if result.get("metric") == "weighted_unit_price":
                 value = result["rows"][0]["value"] if result["rows"] else None
                 return "按总销售额除以总销量计算，加权成交均价为 " + str(value) + "。币种未指定。"
-            return "只读查询已完成，返回 " + str(result["row_count"]) + " 行。详细SQL与结果表格见下方查询依据。"
+            return ("只读查询已完成，返回 " + str(result["row_count"]) + " 行。"
+                    + ("结果已截断，仅代表已返回部分；请减少字段或缩小范围。" if result.get('truncated') else "")
+                    + "详细SQL与结果表格见下方查询依据。")
         if "artifact" in result:
             return "销售图表已生成，可在下方查看或下载 PNG。图中最多显示前20名商品或最近366个有记录日期。"
         if "row_count" in result:

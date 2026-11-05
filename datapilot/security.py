@@ -47,7 +47,7 @@ class LocalSecurityMiddleware:
 
         buffered_receive = receive
         if is_api and scope['method'] in ('POST','PUT','PATCH'):
-            upload = re.fullmatch(r'/api/sessions/[^/]+/dataset',scope['path'])
+            upload = re.fullmatch(r'/api/sessions/[^/]+/dataset/?',scope['path'])
             limit = MAX_BYTES if upload else JSON_LIMIT
             try:
                 length = int(headers.get('content-length','0'))

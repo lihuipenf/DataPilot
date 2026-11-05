@@ -111,7 +111,7 @@ class PersistenceTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         config, web = module("config"), module("web")
         settings = config.Settings(api_key="", state_path=temp_dir()/"state.sqlite3", output_dir=temp_dir())
-        return settings, TestClient(web.create_app(settings))
+        return settings, TestClient(web.create_app(settings), base_url="http://localhost")
 
     def test_dataset_history_and_evidence_survive_restart(self):
         from fastapi.testclient import TestClient
@@ -120,7 +120,7 @@ class PersistenceTests(unittest.TestCase):
         url = f"/api/sessions/{identifier}"
         first.post(url+"/dataset", content=b"date,product,quantity,unit_price\n2026-11-01,Custom,2,7\n", headers={"x-filename":"custom.csv"})
         first.post(url+"/chat", json={"question":"所有商品的总销售额是多少？"})
-        restored = TestClient(module("web").create_app(settings))
+        restored = TestClient(module("web").create_app(settings), base_url="http://localhost")
         result = restored.get(url).json()
         self.assertEqual(result["filename"], "custom.csv")
         self.assertEqual(result["summary"]["total_sales_amount"], 14)
@@ -135,7 +135,7 @@ class PersistenceTests(unittest.TestCase):
         first.post(url+"/chat", json={"question":"Keyboard 的销售额是多少？"})
         self.assertEqual(first.post(url+"/dataset", content=b"wrong").status_code,400)
         first.post(url+"/reset")
-        restored = TestClient(module("web").create_app(settings))
+        restored = TestClient(module("web").create_app(settings), base_url="http://localhost")
         self.assertEqual(restored.get(url).json()["turns"], [])
         self.assertEqual(restored.get(url).json()["summary"]["total_sales_amount"],1350)
 
@@ -188,7 +188,7 @@ class PersistenceTests(unittest.TestCase):
             finally:
                 resume.set()
             self.assertEqual(first.result(timeout=10).status_code,200)
-        restored=TestClient(module("web").create_app(settings))
+        restored=TestClient(module("web").create_app(settings), base_url="http://localhost")
         questions={turn["question"] for turn in restored.get(url).json()["turns"]}
         self.assertEqual(questions,{"所有商品的总销售额是多少？","Mouse 的销售额是多少？"})
 

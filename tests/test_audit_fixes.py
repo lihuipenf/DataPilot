@@ -64,7 +64,7 @@ class HttpAndReportTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.app = create_app(Settings(output_dir=Path(self.directory.name)))
-        self.client = TestClient(self.app, raise_server_exceptions=False)
+        self.client = TestClient(self.app, raise_server_exceptions=False, base_url="http://localhost")
         self.addCleanup(self.client.close)
         self.sid = self.client.post('/api/sessions', json={'mode': 'demo'}).json()['id']
         self.url = '/api/sessions/' + self.sid

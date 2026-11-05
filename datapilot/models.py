@@ -4,6 +4,7 @@ from functools import wraps
 import json
 import time
 import httpx
+from .budget import check_turn, request_timeout
 
 
 class ModelError(RuntimeError):
@@ -76,13 +77,18 @@ class OpenAICompatibleGateway:
         self.settings = settings
         # SDK 不额外重试；下面统一限制为最多重试一次。
         self.client = OpenAI(api_key=settings.api_key, base_url=settings.base_url,
-                             timeout=settings.timeout, max_retries=0)
+                             timeout=settings.timeout, max_retries=0,
+                             http_client=httpx.Client(trust_env=settings.trust_env))
+
+    def close(self):
+        self.client.close()
 
     @validated_reply
     def complete(self, messages, tools, allow_tools=True):
         from openai import (APITimeoutError, APIConnectionError, AuthenticationError,
                             RateLimitError, APIStatusError)
         for attempt in range(2):
+            check_turn()
             try:
                 params = dict(model=self.settings.model,
                               messages=[{k:v for k,v in m.items() if k != "provider_data"} for m in messages],
@@ -91,7 +97,7 @@ class OpenAICompatibleGateway:
                     params["extra_body"] = {"thinking": {"type": "disabled"}}
                 if tools:
                     params.update(tools=tools, tool_choice="auto" if allow_tools else "none")
-                response = self.client.chat.completions.create(**params)
+                response = self.client.chat.completions.create(**params, timeout=request_timeout(self.settings.timeout))
                 if not response.choices:
                     raise ModelError("empty_response", "模型没有返回有效内容，请重试。")
                 if response.choices[0].finish_reason == "length":
@@ -143,7 +149,7 @@ class ResponsesGateway(OpenAICompatibleGateway):
             params.update(tools=[{"type":"function", **t["function"], "strict":False} for t in tools],
                           tool_choice="auto" if allow_tools else "none")
         # 共用同一有界重试/脱敏错误策略，避免 SDK 隐式额外重试。
-        response = self._request(lambda: self.client.responses.create(**params))
+        response = self._request(lambda: self.client.responses.create(**params, timeout=request_timeout(self.settings.timeout)))
         if response.status != "completed":
             raise ModelError("truncated_response", "模型未完成回答，请缩小问题或检查模型输出额度。")
         output = [item.model_dump(exclude_none=True) for item in response.output]
@@ -156,6 +162,7 @@ class ResponsesGateway(OpenAICompatibleGateway):
     def _request(self, request):
         from openai import APIConnectionError, APIStatusError, APITimeoutError
         for attempt in range(2):
+            check_turn()
             try:
                 return request()
             except (APIConnectionError, APIStatusError) as error:
@@ -201,10 +208,11 @@ class ClaudeGateway:
                                 "input_schema":t["function"]["parameters"]} for t in tools]
             params["tool_choice"] = {"type":"auto" if allow_tools else "none"}
         for attempt in range(2):
+            check_turn()
             try:
                 response = httpx.post(self.settings.base_url.rstrip("/") + "/messages", json=params,
                                       headers={"x-api-key":self.settings.api_key,"anthropic-version":"2023-06-01"},
-                                      timeout=self.settings.timeout)
+                                      timeout=request_timeout(self.settings.timeout), trust_env=self.settings.trust_env)
                 response.raise_for_status()
                 body = response.json()
                 if body.get("stop_reason") not in ("end_turn", "tool_use", "stop_sequence"):

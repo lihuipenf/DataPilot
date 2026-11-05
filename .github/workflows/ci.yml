@@ -22,14 +22,38 @@ jobs:
       - run: python scripts/check_secrets.py
       - run: python -m unittest discover -v
       - run: python -m evals.run_eval --mode demo
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pip-audit==2.10.1 bandit==1.9.4
+      - run: python -m pip_audit --no-deps --disable-pip -r requirements-lock.txt
+      # 已审阅的中/低告警保留在审计报告；新高危告警阻断CI。
+      - run: python -m bandit -r datapilot scripts app.py -lll
   container-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Add synthetic packaging exclusion probes
+        shell: python
+        run: |
+          from pathlib import Path
+          for name in ('audit-private.csv','audit-private.sqlite3','datapilot/audit-private.csv','datapilot/audit-private.db'):
+              Path(name).write_text('synthetic exclusion probe', encoding='utf-8')
       - run: docker build -t datapilot:ci .
       - run: docker run -d --name datapilot-smoke -p 127.0.0.1:8765:8765 datapilot:ci
+      - name: Check image excludes runtime data and retains examples
+        run: >-
+          docker exec datapilot-smoke python -c
+          "from pathlib import Path;
+          assert not any(Path('/app', p).exists() for p in ('audit-private.csv','audit-private.sqlite3','datapilot/audit-private.csv','datapilot/audit-private.db'));
+          assert all(Path('/app', p).is_file() for p in ('sales.csv','examples/retail_weekly.csv','examples/promotion_review.csv','examples/data_boundaries.csv'))"
       - name: Verify container health and offline chat
         shell: python
         run: |

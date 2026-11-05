@@ -41,7 +41,7 @@ class ExampleTests(unittest.TestCase):
     def test_all_documented_demo_questions_through_web(self):
         cases=self.manifest()['cases']
         folder=Path(tempfile.mkdtemp(prefix='datapilot-examples-'))
-        with TestClient(create_app(Settings(api_key='',output_dir=folder))) as client:
+        with TestClient(create_app(Settings(api_key='',output_dir=folder)), base_url="http://localhost") as client:
             for case in cases:
                 with self.subTest(case=case['id']):
                     identifier=client.post('/api/sessions',json={'mode':'demo'}).json()['id']

@@ -396,6 +396,9 @@ async function sendQuestion(text) {
   $("#question").value = "";
   setBusy(true);
   const pending = element("div", "pending", "正在选择工具并分析数据");
+  $("#stop-analysis").hidden = false;
+  $("#stop-analysis").disabled = false;
+  $("#stop-analysis").textContent = "停止分析";
   $("#chat-log").append(pending);
   scrollChat();
   try {
@@ -406,11 +409,24 @@ async function sendQuestion(text) {
     pending.remove();
     addMessage("error", error.message);
   } finally {
+    $("#stop-analysis").hidden = true;
     setBusy(false);
     refreshHistory().catch(() => {});
     $("#question").focus();
   }
 }
+$("#stop-analysis").addEventListener("click", async () => {
+  if (!session || !busy) return;
+  $("#stop-analysis").disabled = true;
+  try {
+    await post(`/api/sessions/${session.id}/cancel`, {});
+    $("#stop-analysis").textContent = "正在停止…";
+    toast("已请求停止；当前网络调用结束或超时后停止后续步骤，历史保留。");
+  } catch (error) {
+    toast(error.message);
+    $("#stop-analysis").disabled = false;
+  }
+});
 async function uploadFile(file) {
   if (!file || busy || !session) return;
   if (!file.name.toLowerCase().endsWith(".csv"))

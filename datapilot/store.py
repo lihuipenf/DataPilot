@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
 import time
+import os
 
 
 class StorageError(RuntimeError):
@@ -11,10 +12,18 @@ class StorageError(RuntimeError):
 
 
 class SessionStore:
-    def __init__(self, path):
+    def __init__(self, path, max_sessions=200):
+        if str(path) == ':memory:':
+            raise StorageError('SessionStore 不支持 :memory:；请使用文件路径或关闭持久化。')
         self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.max_sessions = max_sessions
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         try:
+            # 新文件从创建起即限制权限；已有文件内容不变。
+            fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
+            os.close(fd)
+            if os.name != 'nt':
+                self.path.chmod(0o600)
             with self._connect() as connection:
                 version = connection.execute("PRAGMA user_version").fetchone()[0]
                 if version not in [0, 1]:
@@ -22,7 +31,7 @@ class SessionStore:
                 connection.execute("PRAGMA journal_mode=WAL")
                 connection.execute("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, payload TEXT NOT NULL, summary TEXT NOT NULL, updated REAL NOT NULL)")
                 connection.execute("PRAGMA user_version=1")
-        except sqlite3.Error as error:
+        except (sqlite3.Error, OSError) as error:
             raise StorageError("无法初始化会话数据库，请检查输出目录的写入权限。") from error
 
     @contextmanager
@@ -43,6 +52,11 @@ class SessionStore:
         try:
             text = json.dumps(payload, ensure_ascii=False, allow_nan=False)
             with self._connect() as connection:
+                # 在同一写事务中检查，防止并发创建绕过配额；更新已有会话允许继续。
+                connection.execute('BEGIN IMMEDIATE')
+                exists = connection.execute('SELECT 1 FROM sessions WHERE id=?',(payload['id'],)).fetchone()
+                if not exists and connection.execute('SELECT COUNT(*) FROM sessions').fetchone()[0] >= self.max_sessions:
+                    raise StorageError('已达持久会话数量配额，请备份后调整 DATAPILOT_MAX_SAVED_SESSIONS。')
                 connection.execute("INSERT INTO sessions VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload, summary=excluded.summary, updated=excluded.updated",
                                    (payload["id"], text, json.dumps(summary, ensure_ascii=False), summary["updated_at"]))
         except (sqlite3.Error, ValueError) as error:

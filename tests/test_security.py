@@ -13,7 +13,7 @@ from .test_core import registry
 
 class BoundaryTests(unittest.TestCase):
     def setUp(self):
-        self.client=TestClient(create_app(Settings(output_dir=Path(tempfile.mkdtemp()))))
+        self.client=TestClient(create_app(Settings(output_dir=Path(tempfile.mkdtemp()))), base_url="http://localhost")
         self.addCleanup(self.client.close)
         self.identifier=self.client.post('/api/sessions',json={'mode':'demo'}).json()['id']
         self.url=f'/api/sessions/{self.identifier}'
@@ -27,7 +27,7 @@ class BoundaryTests(unittest.TestCase):
                 self.assertEqual(len(self.client.get(self.url).json()['turns']),1)
 
     def test_same_origin_and_non_browser_clients_remain_usable(self):
-        self.assertEqual(self.client.post(self.url+'/reset',headers={'origin':'http://testserver'}).status_code,200)
+        self.assertEqual(self.client.post(self.url+'/reset',headers={'origin':'http://localhost'}).status_code,200)
         self.assertEqual(self.client.get('/api/sessions',headers={'origin':'https://other.example'}).status_code,403)
         self.assertEqual(self.client.get('/api/sessions').status_code,200)
 

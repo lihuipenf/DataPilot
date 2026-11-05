@@ -223,7 +223,7 @@ class AgentTests(unittest.TestCase):
 class WebTests(unittest.TestCase):
     def setUp(self):
         from fastapi.testclient import TestClient
-        self.client = TestClient(module("web").create_app(module("config").Settings(api_key="")))
+        self.client = TestClient(module("web").create_app(module("config").Settings(api_key="")), base_url="http://localhost")
         self.session = self.client.post("/api/sessions", json={"mode": "demo"}).json()["id"]
 
     def test_demo_chat_and_exports(self):

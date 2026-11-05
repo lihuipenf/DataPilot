@@ -38,7 +38,7 @@ v1.2继续读 `create_gateway()`、`ResponsesGateway` 和 `ClaudeGateway`：比�
 
 ## 6. 理解网页入口
 
-读 `web.py` 的 `/chat`、`/dataset`、`/providers` 和创建会话路由，再看 `static/app.js` 中的 `startSession()`、`sendQuestion()` 和 `renderResult()`。浏览器发送问题、CSV或模型选择，服务器返回答案、工具记录和图表地址。旧 `/mode` 路由仍保留兼容。
+读 `web.py` 的 `/chat`、`/dataset`、`/providers` 和创建会话路由，再看 `static/app.js` 中的 `startSession()`、`sendQuestion()` 和 `renderResult()`。浏览器发送问题、CSV或模型选择，服务器返回答案、工具记录和图表地址。`/mode` 从v1.3起复制数据并返回新会话ID，旧历史保留；`/cancel` 请求协作式停止当前分析。时间预算实现在 `budget.py`，不会强制终止正在进行的同步调用。
 
 ## 7. 读测试和评测
 

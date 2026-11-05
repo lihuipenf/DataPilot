@@ -4,11 +4,25 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from scripts import check_secrets
 
 
 class ReleaseSafetyTests(unittest.TestCase):
+    def test_source_archive_retains_license_notice(self):
+        from scripts import package_source
+        with tempfile.TemporaryDirectory() as directory:
+            folder=Path(directory)
+            notice=b'MIT License\n\nCopyright (c) 2026 Example\n'
+            (folder/'LICENSE').write_bytes(notice)
+            (folder/'README.md').write_text('Example source package',encoding='utf-8')
+            with patch.object(package_source,'ROOT',folder):
+                archive=package_source.package()
+            with zipfile.ZipFile(archive) as content:
+                self.assertIn('DataPilot/LICENSE',content.namelist())
+                self.assertEqual(content.read('DataPilot/LICENSE'),notice)
+
     def test_blocks_provider_keys_in_the_git_index(self):
         folder=Path(tempfile.mkdtemp())
         subprocess.run(["git","init","-q",str(folder)],check=True)

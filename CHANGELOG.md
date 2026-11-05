@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- 添加MIT许可证（Copyright 2026 lihuipenf），同步中英文README与贡献说明；源码ZIP保留LICENSE，并增加打包回归。
+
 ## 1.3.0 — 2026-11-05
 
 - 统一消息/工具定义预算，大结果按完整行截断；切换模式API复制会话，保留原历史。

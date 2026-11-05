@@ -134,3 +134,7 @@ CSV uploads allow at most 64 columns; only the four required business columns ar
 See [evaluation records](docs/evaluation.md) for actual results and limitations. Offline rules scores, unit tests and live model evaluation are different forms of evidence. Small fixed-dataset results do not establish production accuracy. Model requests in live mode send questions, necessary history and tool evidence to the configured provider.
 
 The repository is private during development. Runtime datasets, state databases, keys, virtual environments and generated output directories are excluded from version control.
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 lihuipenf. Use, modification, distribution and commercial use are permitted with the copyright and permission notice retained. The software is provided as is, without warranty. Third-party dependencies and fonts retain their respective licenses.

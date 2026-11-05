@@ -1,12 +1,20 @@
-# DataPilot · 销售数据分析 Agent
+# DataPilot
 
-[English](README_EN.md) · [完整启动教程](docs/getting-started.md) · [变更记录](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
+**上传销售 CSV，用自然语言得到可核对的分析结果。**
 
-用自然语言查询销售数据，查看计算依据，生成图表并导出报告。项目从 CSV / Pandas 练习发展为一个带工具调用、短期对话记忆和质量校验的本地应用。
+DataPilot 是一个用 Python 构建的本地销售数据分析 Agent。问销量、查排名、对比日期区间，或生成趋势图；展开分析过程，可以查看工具参数、计算结果，以及 SQL 查询的语句和结果表格。
 
-**v1.2 新增：DeepSeek、OpenAI/Codex、Claude 与 OpenAI 兼容服务，网页选择模型，按会话记录模型来源。** 保留 v1.1 的只读SQL、指标口径与持久会话。学习 [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) 的执行分层和 [WrenAI](https://github.com/Canner/WrenAI) 的语义上下文思路，在销售场景中独立实现；不包含它们的源码。
+[快速启动](#快速运行) · [体验三个案例](#三个上手案例) · [配置模型](docs/models.md) · [English](README_EN.md)
+
+- **先体验，再接模型**：内置无需 API Key 的离线规则演示；实时模式支持 DeepSeek、OpenAI/Codex、Claude 和 OpenAI 兼容服务。
+- **回答附带查询依据**：11 个参数校验工具、版本化指标口径和受限只读 SQL，帮助核对数字来源。
+- **完成一次分析流程**：上传 CSV、连续追问、恢复历史会话，导出 Markdown 报告、汇总 CSV 和 PNG 图表。
 
 ![工作台](docs/screenshots/workspace-v12.png)
+
+例如，在下方“电商周报”案例中，问“哪个商品销售额最高？”会得到**显示器，9000**；改问销量排名，第一名则是**无线鼠标，60 件**。可以继续查看明细、生成图表并下载结果。
+
+默认以离线规则演示启动；接入模型后可使用实时 Agent 分析。数据需符合[销售 CSV 约定](#csv-数据约定)，应用面向单用户本地使用。
 
 ## 三个上手案例
 
@@ -173,6 +181,8 @@ outputs/                运行产物（Git忽略，保留在本地）
 每轮最多4轮工具选择、8次工具执行，最后一轮仅生成回答；每个模型步骤最多2次HTTP尝试，默认单次超时45秒。失败不提交不完整历史。Token来自服务返回值；可在 `.env` 填写每百万Token单价估算费用，实际账单以服务商为准。
 
 ## 展示与面试
+
+学习 [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) 的执行分层和 [WrenAI](https://github.com/Canner/WrenAI) 的语义上下文思路，在销售场景中独立实现；不包含它们的源码。
 
 - [架构与请求流程](docs/architecture.md)
 - [按模块理解代码](docs/learning-guide.md)

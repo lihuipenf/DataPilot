@@ -1,10 +1,20 @@
 # DataPilot
 
-[中文文档](README.md) · [Detailed setup guide (Chinese)](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Changelog](CHANGELOG.md)
+**Upload a sales CSV. Ask questions. Check the evidence behind the answers.**
 
-A local, explainable sales analytics agent powered by Python with DeepSeek, OpenAI/Codex (Responses API), Claude (native Messages API), and OpenAI-compatible Chat Completions providers. Ask questions, inspect tool evidence and read-only SQL, generate charts, and export reports.
+DataPilot is a local sales analytics agent built with Python. Explore sales totals, product rankings and date ranges, or generate trend charts. Expand the analysis trace to inspect tool arguments, computed results, and SQL statements with their result tables.
+
+[Quick start](#run) · [Try three examples](#three-reproducible-examples) · [Configure models](docs/models.md) · [中文文档](README.md)
+
+- **Try it before connecting a model.** The offline rules demo needs no API key. Live mode supports DeepSeek, OpenAI/Codex, Claude and OpenAI-compatible services.
+- **Inspect the evidence.** Eleven schema-validated tools, versioned metric definitions and restricted read-only SQL help you verify where numbers come from.
+- **Complete an analysis workflow.** Upload CSVs, ask follow-up questions, restore past sessions and export Markdown reports, summary CSVs and PNG charts.
 
 ![Workspace](docs/screenshots/workspace-v12.png)
+
+In the weekly retail example below, the revenue leader is **显示器 (monitor), 9000**, while the unit-sales leader is **无线鼠标 (wireless mouse), 60 units**. Inspect the results, generate a chart and download your analysis.
+
+The app starts in offline rules demo mode; connect a model for live agent analysis. It is designed for single-user local use with a fixed sales CSV schema. The interface and example prompts are in Chinese.
 
 ## Three reproducible examples
 

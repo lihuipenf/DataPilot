@@ -27,7 +27,7 @@ git clone https://github.com/lihuipenf/DataPilot.git
 cd DataPilot
 ```
 
-仓库目前私有，需要已获授权的GitHub账号完成Git认证。出现 `Repository not found` 或认证失败时，先确认账号有仓库访问权限。如果无法使用Git，可在有权限的仓库页面通过 **Code → Download ZIP** 下载并解压，再进入包含 `app.py`、`requirements-lock.txt` 和 `sales.csv` 的目录，继续安装。
+出现 `Repository not found` 或认证失败时，先确认仓库地址和账号访问权限。如果无法使用Git，可从 [最新 Release](https://github.com/lihuipenf/DataPilot/releases/latest) 下载源码包，或通过 **Code → Download ZIP** 下载分支源码。解压后进入包含 `app.py`、`requirements-lock.txt` 和 `sales.csv` 的目录，继续安装。Release源码包附带LICENSE、安全政策及SHA-256校验文件。
 
 已有项目源码时跳过克隆。目录中有空格时，终端切换目录的路径要加引号。不要在 `.venv` 子目录中创建或运行项目文件。
 
@@ -186,7 +186,7 @@ git pull --ff-only
 
 | 现象 | 处理方法 |
 |---|---|
-| `Repository not found` / Git认证失败 | 当前仓库私有；确认GitHub账号有权限。公开前无法匿名克隆 |
+| `Repository not found` / Git认证失败 | 检查仓库URL、网络连接和GitHub账号访问权限 |
 | `python` / `python3.12` 未找到 | 安装Python 3.12并重新打开终端；Windows可尝试 `py -3.12`，Unix仅在确认版本后使用 `python3` |
 | 无匹配依赖版本或尝试从源码编译失败 | 核对Python 3.12及平台；优先安装64位Python或改用Docker。检查PyPI访问与实际报错，不要随意删除锁定版本 |
 | `ModuleNotFoundError` | 用当前项目虚拟环境的Python执行 `-m pip install -r requirements-lock.txt`，并核对PyCharm解释器 |

@@ -4,7 +4,7 @@
 
 DataPilot 是一个用 Python 构建的本地销售数据分析 Agent。问销量、查排名、对比日期区间，或生成趋势图；展开分析过程，可以查看工具参数、计算结果，以及 SQL 查询的语句和结果表格。
 
-[快速启动](#快速运行) · [体验三个案例](#三个上手案例) · [配置模型](docs/models.md) · [English](README_EN.md)
+[快速启动](#快速运行) · [体验三个案例](#三个上手案例) · [最新版本](https://github.com/lihuipenf/DataPilot/releases/latest) · [安全报告](SECURITY.md) · [English](README_EN.md)
 
 - **先体验，再接模型**：内置无需 API Key 的离线规则演示；实时模式支持 DeepSeek、OpenAI/Codex、Claude 和 OpenAI 兼容服务。
 - **回答附带查询依据**：11 个参数校验工具、版本化指标口径和受限只读 SQL，帮助核对数字来源。
@@ -30,7 +30,7 @@ DataPilot 是一个用 Python 构建的本地销售数据分析 Agent。问销�
 
 ## 快速运行
 
-需要 **Git 和 Python 3.12.x**，无需 Node.js、前端构建或模型密钥。先在你选择的父目录打开终端。仓库目前私有，克隆需要有访问权限的 GitHub 账号；已有源码请直接进入含 `app.py` 的项目根目录，跳过克隆。
+需要 **Git 和 Python 3.12.x**，无需 Node.js、前端构建或模型密钥。先在你选择的父目录打开终端；已有源码请直接进入含 `app.py` 的项目根目录，跳过克隆。也可以从 [最新 Release](https://github.com/lihuipenf/DataPilot/releases/latest) 下载源码 ZIP，解压后继续安装。
 
 **Windows PowerShell**（先用 `python --version` 确认是3.12.x）：
 
@@ -201,7 +201,7 @@ outputs/                运行产物（Git忽略，保留在本地）
 
 GitHub Actions运行无密钥单元/集成测试、离线评测和容器冒烟测试；真实模型评测保留为本地显式命令。Actions依赖固定到已核对的提交SHA。
 
-当前仓库保持私有，后续公开另行决定。本地 `.env`、业务数据、虚拟环境及运行产物不提交。参见 [v1.1设计与来源](docs/v1.1-plan.md)。
+本地 `.env`、业务数据、虚拟环境及运行产物不提交。安全漏洞请按 [SECURITY.md](SECURITY.md) 私下报告。参见 [v1.1设计与来源](docs/v1.1-plan.md)。
 
 ## 许可证
 

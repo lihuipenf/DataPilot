@@ -9,7 +9,6 @@ from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
-import time
 
 import pandas as pd
 from fastapi.testclient import TestClient
@@ -179,13 +178,16 @@ class HardeningTests(unittest.TestCase):
             self.assertEqual(first.result(timeout=3).status_code,200)
 
     def test_deadline_and_inflight_cancel_prevent_commit(self):
+        clock=[0.0]
         class Slow:
             mode='test'
             def complete(self,*args,**kwargs):
-                time.sleep(0.01)
+                clock[0]=2.0
                 return ModelReply(content='too late')
-        agent=AgentSession(ToolRegistry(load_sales(),self.root),Slow(),replace(Settings(),turn_timeout=0.001))
-        with self.assertRaises(ModelError) as caught:agent.ask('总销售额？')
+        agent=AgentSession(ToolRegistry(load_sales(),self.root),Slow(),replace(Settings(),turn_timeout=1.0))
+        # Windows单调时钟可能只有15.6ms精度，用受控时钟验证模型返回后的截止边界。
+        with patch('datapilot.budget.time.monotonic',side_effect=lambda:clock[0]):
+            with self.assertRaises(ModelError) as caught:agent.ask('总销售额？')
         self.assertEqual(caught.exception.code,'turn_timeout')
         self.assertEqual(agent.turns,[])
 

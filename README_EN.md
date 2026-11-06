@@ -4,7 +4,7 @@
 
 DataPilot is a local sales analytics agent built with Python. Explore sales totals, product rankings and date ranges, or generate trend charts. Expand the analysis trace to inspect tool arguments, computed results, and SQL statements with their result tables.
 
-[Quick start](#run) · [Try three examples](#three-reproducible-examples) · [Configure models](docs/models.md) · [中文文档](README.md)
+[Quick start](#run) · [Try three examples](#three-reproducible-examples) · [Latest release](https://github.com/lihuipenf/DataPilot/releases/latest) · [Security policy](SECURITY.md) · [中文文档](README.md)
 
 - **Try it before connecting a model.** The offline rules demo needs no API key. Live mode supports DeepSeek, OpenAI/Codex, Claude and OpenAI-compatible services.
 - **Inspect the evidence.** Eleven schema-validated tools, versioned metric definitions and restricted read-only SQL help you verify where numbers come from.
@@ -41,7 +41,7 @@ The design learns from DB-GPT's execution layering and WrenAI's semantic-context
 
 ## Run
 
-Install Git and **Python 3.12.x** first. Node.js and frontend build tools are not required. The repository is currently private: cloning requires an authorized GitHub account. If you already have the source, open its root directory (containing `app.py`) and skip cloning.
+Install Git and **Python 3.12.x** first. Node.js and frontend build tools are not required. If you already have the source, open its root directory (containing `app.py`) and skip cloning. You can also download the source ZIP from the [latest release](https://github.com/lihuipenf/DataPilot/releases/latest), extract it, and continue with installation.
 
 **Windows PowerShell** — check `python --version` is 3.12.x. If needed, use `py -3.12` to create the environment:
 
@@ -112,7 +112,7 @@ Open the same local URL. `Ctrl+C` exits log following without stopping the conta
 
 - **Missing packages:** install with the same virtual environment interpreter used to run `app.py`. In PyCharm select that interpreter explicitly.
 - **Port 8765 already in use:** stop your earlier native/container instance, or run `.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8766` (Windows: replace the interpreter path), then open port 8766.
-- **Repository not found:** private repository access requires an authorized GitHub account.
+- **Repository not found:** verify the repository URL and your account's access permissions.
 - **Missing `.env`:** native demo does not need it; Compose does. Use the guarded copy command to preserve existing credentials.
 - **Unexpected model configuration:** process environment variables override `.env`; restart native services or recreate containers after changes.
 - **Updating:** stop native services and back up the full `outputs/` directory and local `.env`. Save source edits before `git pull --ff-only`, reinstall locked dependencies, then restart. Do not overwrite `.env` with the example. Container data lives in its named volume.
@@ -133,7 +133,7 @@ CSV uploads allow at most 64 columns; only the four required business columns ar
 
 See [evaluation records](docs/evaluation.md) for actual results and limitations. Offline rules scores, unit tests and live model evaluation are different forms of evidence. Small fixed-dataset results do not establish production accuracy. Model requests in live mode send questions, necessary history and tool evidence to the configured provider.
 
-The repository is private during development. Runtime datasets, state databases, keys, virtual environments and generated output directories are excluded from version control.
+Runtime datasets, state databases, keys, virtual environments and generated output directories are excluded from version control. Report vulnerabilities privately through the channel in [SECURITY.md](SECURITY.md).
 
 ## License
 

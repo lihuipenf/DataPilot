@@ -532,6 +532,7 @@ $("#restore-data").addEventListener("click", async () => {
   setBusy(true);
   try {
     health = await api("/api/health");
+    $("#app-version").textContent = `v${health.version}`;
     const catalog = await api("/api/providers");
     providers = catalog.providers;
     for (const provider of providers) {

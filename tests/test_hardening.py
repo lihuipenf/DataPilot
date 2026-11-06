@@ -112,6 +112,13 @@ class HardeningTests(unittest.TestCase):
         c=self.client()
         self.assertEqual(c.get('/api/health',headers={'host':'testserver'}).status_code,400)
 
+    def test_health_and_openapi_follow_the_build_version(self):
+        # 模拟下一次发版，防止接口继续返回遗留硬编码版本。
+        with patch('datapilot.web.__version__','9.8.7',create=True):
+            c=self.client()
+            self.assertEqual(c.get('/api/health').json()['version'],'9.8.7')
+            self.assertEqual(c.get('/openapi.json').json()['info']['version'],'9.8.7')
+
     def test_store_session_limit_rejects_new_but_allows_update(self):
         c=self.client(max_saved_sessions=2)
         ids=[c.post('/api/sessions',json={'mode':'demo'}).json()['id'] for _ in range(2)]

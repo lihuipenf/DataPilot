@@ -6,11 +6,13 @@ DataPilot is a local sales analytics agent built with Python. Explore sales tota
 
 [Quick start](#run) · [Try three examples](#three-reproducible-examples) · [Latest release](https://github.com/lihuipenf/DataPilot/releases/latest) · [Security policy](SECURITY.md) · [中文文档](README.md)
 
+Current version: **v1.3.1** · Python 3.12 · MIT. See the [documentation index](docs/README.md) and [v1.3.1 release notes](docs/releases/v1.3.1.md). Detailed guides are in Chinese.
+
 - **Try it before connecting a model.** The offline rules demo needs no API key. Live mode supports DeepSeek, OpenAI/Codex, Claude and OpenAI-compatible services.
 - **Inspect the evidence.** Eleven schema-validated tools, versioned metric definitions and restricted read-only SQL help you verify where numbers come from.
 - **Complete an analysis workflow.** Upload CSVs, ask follow-up questions, restore past sessions and export Markdown reports, summary CSVs and PNG charts.
 
-![Workspace](docs/screenshots/workspace-v12.png)
+![DataPilot v1.3.1 workspace](docs/screenshots/workspace-v131.png)
 
 In the weekly retail example below, the revenue leader is **显示器 (monitor), 9000**, while the unit-sales leader is **无线鼠标 (wireless mouse), 60 units**. Inspect the results, generate a chart and download your analysis.
 
@@ -29,6 +31,8 @@ All examples use synthetic CSV data and six copyable Chinese prompts each. They 
 Download CSVs from the [example directory](examples/README.md), create a new session for each, then upload its file. Walkthroughs and UI prompts are in Chinese. Keep original CSVs intact; spreadsheet software may strip leading zeros if you open and resave them.
 
 ## What is implemented
+
+The v1.3.1 regression checks cover **100 automated tests and 26 offline cases**. These checks are separate from the historical live-model evaluations in the [evaluation report](docs/evaluation.md).
 
 - Eleven schema-validated tools covering sales totals, products, dates, rankings, charts, schema discovery, business metrics and read-only SQL.
 - Versioned metric definitions in `semantic/metrics.json`; weighted price is explicitly different from the simple average of prices.

@@ -1,5 +1,7 @@
 # 从零启动 DataPilot
 
+当前文档适用 **v1.3.1**。[文档导航](README.md) · [发布说明](releases/v1.3.1.md)。正式源码包以GitHub Latest Release为准，分支源码可能包含尚未发布的改动。
+
 [项目首页](../README.md) · [English quick start](../README_EN.md) · [模型配置](models.md)
 
 本教程从获取源码开始。先运行不需要密钥的规则演示，再按需接入模型。命令以项目根目录为工作目录，不依赖作者的盘符、用户名或PyCharm配置。

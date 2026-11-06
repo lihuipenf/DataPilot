@@ -23,6 +23,7 @@ from .reports import markdown_report, summary_csv
 from .tools import ToolRegistry
 from .store import SessionStore, StorageError
 from .security import LocalSecurityMiddleware
+from . import __version__
 
 
 class SessionInput(BaseModel):
@@ -72,7 +73,7 @@ def create_app(settings=None):
                 await run_in_threadpool(record.agent.close)
 
     # 保留OpenAPI JSON；自动文档依赖外部CDN/内联脚本，与本地CSP不兼容。
-    app = FastAPI(title="DataPilot", version="1.3.0", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app = FastAPI(title="DataPilot", version=__version__, docs_url=None, redoc_url=None, lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
     app.add_middleware(LocalSecurityMiddleware)
     store = SessionStore(settings.state_path, settings.max_saved_sessions) if settings.state_path else None
@@ -197,7 +198,7 @@ def create_app(settings=None):
     @app.get("/api/health")
     def health():
         return {"status": "ok", "model": settings.model, "live_available": bool(settings.api_key),
-                "provider":settings.provider, "version": "1.3.0", "persistence":store is not None}
+                "provider":settings.provider, "version": __version__, "persistence":store is not None}
 
     @app.get("/api/providers")
     def providers():

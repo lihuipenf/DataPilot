@@ -6,11 +6,13 @@ DataPilot 是一个用 Python 构建的本地销售数据分析 Agent。问销�
 
 [快速启动](#快速运行) · [体验三个案例](#三个上手案例) · [最新版本](https://github.com/lihuipenf/DataPilot/releases/latest) · [安全报告](SECURITY.md) · [English](README_EN.md)
 
+当前版本 **v1.3.1** · Python 3.12 · MIT。完整文档入口见 [文档导航](docs/README.md)，发布变化见 [v1.3.1 说明](docs/releases/v1.3.1.md)。
+
 - **先体验，再接模型**：内置无需 API Key 的离线规则演示；实时模式支持 DeepSeek、OpenAI/Codex、Claude 和 OpenAI 兼容服务。
 - **回答附带查询依据**：11 个参数校验工具、版本化指标口径和受限只读 SQL，帮助核对数字来源。
 - **完成一次分析流程**：上传 CSV、连续追问、恢复历史会话，导出 Markdown 报告、汇总 CSV 和 PNG 图表。
 
-![工作台](docs/screenshots/workspace-v12.png)
+![DataPilot v1.3.1 工作台](docs/screenshots/workspace-v131.png)
 
 例如，在下方“电商周报”案例中，问“哪个商品销售额最高？”会得到**显示器，9000**；改问销量排名，第一名则是**无线鼠标，60 件**。可以继续查看明细、生成图表并下载结果。
 
@@ -76,9 +78,9 @@ DEEPSEEK_TIMEOUT=45
 
 修改环境配置后重启服务。密钥只由Python读取，不发送到浏览器；源码包与Git忽略文件均排除 `.env`。实时模式会把问题、必要对话历史和工具结果发给所选服务商；原始CSV默认不整表发送，但查询结果可能包含原始行。模型 ID 可编辑，实际可用性取决于你的API账户及服务商。
 
-检查结果和下一步优先级见 [v1.2 检查报告](docs/review-v1.2.md)。
+当前能力与待完善项见 [项目进度](docs/progress.md)。[v1.2 检查报告](docs/review-v1.2.md) 是历史快照，其中部分建议已在后续版本实现。
 
-**v1.2.1安全修复**：发布密钥扫描、商品编号解析、SQL整数溢出、跨站修改及异常JSON防护。详见 [Bug与安全检查记录](docs/security-review.md)。交互式 `/docs`、`/redoc` 已关闭，API契约可从 `/openapi.json` 获取。
+安全实现与边界见 [v1.3 加固记录](docs/security-hardening-v1.3.md)；[v1.2.1 检查记录](docs/security-review.md) 保留当时证据。交互式 `/docs`、`/redoc` 已关闭，API契约可从 `/openapi.json` 获取。
 
 ## 可以做什么
 
@@ -136,6 +138,7 @@ datapilot/
   models.py             多模型协议适配、超时与有界重试
   demo.py               明确标注的离线规则演示
   agent.py              工具循环、历史与完整上下文预算
+  budget.py             整轮时间预算与协作式取消
   reports.py            Markdown和CSV导出
   web.py                会话、上传、聊天与文件下载API
   cli.py                连续命令行问答
@@ -156,6 +159,8 @@ outputs/                运行产物（Git忽略，保留在本地）
 ```
 
 ## 测试和评测
+
+v1.3.1发布回归：**100项自动化测试、26条离线题集通过**；真实模型历史评测另见 [评测记录](docs/evaluation.md)，两者不能互相替代。
 
 ```powershell
 # 不调用模型，覆盖真实数据计算、异常、工具流程与HTTP API
@@ -199,7 +204,7 @@ outputs/                运行产物（Git忽略，保留在本地）
 
 已安装并启动Docker时，先按 [Docker启动步骤](docs/getting-started.md#docker-启动) 创建本地 `.env`，再运行 `docker compose up --build -d`。默认不填密钥即可离线演示。命名卷保存会话和产物，端口只绑定宿主机回环地址。镜像以非root用户运行，并提供健康检查。
 
-GitHub Actions运行无密钥单元/集成测试、离线评测和容器冒烟测试；真实模型评测保留为本地显式命令。Actions依赖固定到已核对的提交SHA。
+GitHub Actions运行无密钥单元/集成测试、离线评测、依赖漏洞扫描、静态高危检查和容器启动/打包排除验证；真实模型评测保留为本地显式命令。Actions依赖固定到已核对的提交SHA。
 
 本地 `.env`、业务数据、虚拟环境及运行产物不提交。安全漏洞请按 [SECURITY.md](SECURITY.md) 私下报告。参见 [v1.1设计与来源](docs/v1.1-plan.md)。
 

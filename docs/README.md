@@ -7,6 +7,7 @@
 | 要了解什么 | 文档 |
 |---|---|
 | 当前版本与升级变化 | [v1.3.1发布说明](releases/v1.3.1.md)、[完整变更记录](../CHANGELOG.md) |
+| 支持范围、结果可靠性、隐私与资源限制 | [能力边界与使用约定](capabilities.md) |
 | 安装、PyCharm、Docker、排错 | [通用启动教程](getting-started.md) |
 | 多模型配置、数据发送与协议边界 | [模型指南](models.md) |
 | 无密钥体验与可核对问题 | [三个合成案例](../examples/README.md) |

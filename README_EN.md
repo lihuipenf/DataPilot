@@ -18,6 +18,12 @@ In the weekly retail example below, the revenue leader is **显示器 (monitor),
 
 The app starts in offline rules demo mode; connect a model for live agent analysis. It is designed for single-user local use with a fixed sales CSV schema. The interface and example prompts are in Chinese.
 
+## Capability boundaries
+
+DataPilot handles a fixed sales CSV schema through eleven controlled tools. Arbitrary spreadsheets, external production databases, order/profit/inventory accounting and forecasting are outside the implemented scope. Offline mode uses rules; provider protocol support does not establish live accuracy for every model. Inspect tool arguments and evidence before relying on conclusions: models can misunderstand questions or explain results incorrectly.
+
+There is no multiuser authentication. Live mode sends questions, necessary history and tool results to the selected provider; local session data is stored in plaintext. Cancellation is cooperative and may not stop an accepted, billable provider request. See the detailed [capability and usage boundaries (Chinese)](docs/capabilities.md).
+
 ## Three reproducible examples
 
 All examples use synthetic CSV data and six copyable Chinese prompts each. They work in the offline rules demo without an API key; these checks do not establish live model accuracy.

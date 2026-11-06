@@ -10,7 +10,7 @@ from scripts import check_secrets
 
 
 class ReleaseSafetyTests(unittest.TestCase):
-    def test_source_archive_retains_license_and_security_policy(self):
+    def test_source_archive_retains_license_security_and_support_resources(self):
         from scripts import package_source
         with tempfile.TemporaryDirectory() as directory:
             folder=Path(directory)
@@ -18,6 +18,11 @@ class ReleaseSafetyTests(unittest.TestCase):
             (folder/'LICENSE').write_bytes(notice)
             policy=b'Report vulnerabilities privately to security@example.invalid.\n'
             (folder/'SECURITY.md').write_bytes(policy)
+            support=b'Use issue forms for help; vulnerabilities must be reported privately.\n'
+            (folder/'SUPPORT.md').write_bytes(support)
+            (folder/'.github').mkdir()
+            owners=b'* @example\n'
+            (folder/'.github'/'CODEOWNERS').write_bytes(owners)
             (folder/'README.md').write_text('Example source package',encoding='utf-8')
             with patch.object(package_source,'ROOT',folder):
                 archive=package_source.package()
@@ -26,6 +31,10 @@ class ReleaseSafetyTests(unittest.TestCase):
                 self.assertEqual(content.read('DataPilot/LICENSE'),notice)
                 self.assertIn('DataPilot/SECURITY.md',content.namelist())
                 self.assertEqual(content.read('DataPilot/SECURITY.md'),policy)
+                self.assertIn('DataPilot/SUPPORT.md',content.namelist())
+                self.assertEqual(content.read('DataPilot/SUPPORT.md'),support)
+                self.assertIn('DataPilot/.github/CODEOWNERS',content.namelist())
+                self.assertEqual(content.read('DataPilot/.github/CODEOWNERS'),owners)
 
     def test_blocks_provider_keys_in_the_git_index(self):
         folder=Path(tempfile.mkdtemp())

@@ -10,7 +10,7 @@ except ImportError:  # 同时支持 python scripts/package_source.py 和模块�
 
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_FILES = {"app.py", "api_test.py", "main.py", "sales_tools.py", "check_tools.py", "sales.csv",
-              "README.md", "README_EN.md", "LICENSE", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Dockerfile", "compose.yaml",
+              "README.md", "README_EN.md", "LICENSE", "SECURITY.md", "SUPPORT.md", "CONTRIBUTING.md", "CHANGELOG.md", "Dockerfile", "compose.yaml",
               ".dockerignore", ".gitattributes", ".env.example", ".gitignore", "requirements.txt", "requirements-lock.txt", "start_datapilot.ps1"}
 FOLDERS = {"datapilot", "static", "tests", "evals", "docs", "scripts", "semantic", ".github", "examples"}
 EXTENSIONS = {".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt", ".png", ".webm", ".yml", ".yaml"}
@@ -24,7 +24,7 @@ def package():
         relative = path.relative_to(ROOT)
         if any(part in FORBIDDEN for part in relative.parts) or (path.name.startswith('.env') and path.name != '.env.example'):
             continue
-        if relative.parts[0] in ROOT_FILES or (relative.parts[0] in FOLDERS and path.suffix in EXTENSIONS and "__pycache__" not in relative.parts):
+        if relative.parts[0] in ROOT_FILES or (relative.parts[0] in FOLDERS and (path.suffix in EXTENSIONS or relative.as_posix()=='.github/CODEOWNERS') and "__pycache__" not in relative.parts):
             if path.is_symlink() or not path.resolve().is_relative_to(ROOT.resolve()):
                 raise RuntimeError("源码包不接受指向外部文件的链接。")
             files.append(path)

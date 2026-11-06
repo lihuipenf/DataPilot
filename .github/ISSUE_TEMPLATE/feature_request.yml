@@ -1,0 +1,39 @@
+name: 功能建议 / Feature request
+description: 描述使用场景和希望改善的行为 / Propose an improvement.
+title: "[Feature] "
+labels: [enhancement, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先阅读[能力边界](https://github.com/lihuipenf/DataPilot/blob/main/docs/capabilities.md)。建议被记录不代表已承诺开发或交付日期。
+        Read the capability boundaries first. A request is not a delivery commitment.
+  - type: checkboxes
+    id: preparation
+    attributes:
+      label: 提交前检查 / Before submitting
+      options:
+        - label: 我已搜索重复建议，且不包含密钥或私密数据 / I searched existing requests and removed private data.
+          required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 用户场景与遇到的问题 / Use case and problem
+      description: 描述希望完成的销售分析任务，以及目前哪里受阻。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望行为 / Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已尝试的替代方案 / Alternatives tried
+  - type: textarea
+    id: scope
+    attributes:
+      label: 边界与验收例子 / Scope and acceptance example
+      description: 用合成输入、问题和预期输出举例；可以说明是否愿意贡献。

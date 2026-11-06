@@ -1,0 +1,37 @@
+name: 使用提问 / Usage question
+description: 安装、模型配置、指标和用法问题 / Ask for help.
+title: "[Question] "
+labels: [question, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先查看[帮助入口](https://github.com/lihuipenf/DataPilot/blob/main/SUPPORT.md)；安全漏洞使用私下报告渠道。
+        Check support resources first. Do not include secrets or private records.
+  - type: checkboxes
+    id: preparation
+    attributes:
+      label: 提交前检查 / Before submitting
+      options:
+        - label: 我已查看相关教程/已有Issue，并去除密钥和私密资料 / I checked docs/issues and removed private data.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本与环境 / Version and environment
+      placeholder: v1.3.1，Python 3.12，Windows，demo
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: 想完成什么、具体问题是什么 / Goal and question
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: 已尝试的步骤与结果 / What you tried
+      description: 使用合成数据举例；配置仅填写变量名、是否设置，不提供密钥值。
+    validations:
+      required: true

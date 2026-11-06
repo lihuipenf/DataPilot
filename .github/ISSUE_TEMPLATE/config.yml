@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 私下报告安全漏洞 / Report a vulnerability privately
+    url: https://github.com/lihuipenf/DataPilot/blob/main/SECURITY.md
+    about: 使用安全政策中的专用邮箱，不在公开Issue披露利用细节。
+  - name: 启动教程 / Setup guide
+    url: https://github.com/lihuipenf/DataPilot/blob/main/docs/getting-started.md
+    about: 安装、PyCharm、Docker、模型配置与常见排错。
+  - name: 能力边界 / Capability boundaries
+    url: https://github.com/lihuipenf/DataPilot/blob/main/docs/capabilities.md
+    about: 先确认数据契约、模型验证范围与本地使用限制。

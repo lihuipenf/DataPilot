@@ -1,0 +1,72 @@
+name: 缺陷报告 / Bug report
+description: 报告可复现的安装、数据或分析异常 / Report a reproducible problem.
+title: "[Bug] "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请使用合成数据，不要上传.env、API Key、会话库或真实客户资料。
+        安全漏洞请按[安全政策](https://github.com/lihuipenf/DataPilot/blob/main/SECURITY.md)私下报告，不在这里披露利用细节。
+        Use synthetic data. Report security vulnerabilities privately.
+  - type: checkboxes
+    id: preparation
+    attributes:
+      label: 提交前检查 / Before submitting
+      options:
+        - label: 我已搜索已有Issue并阅读启动教程 / I searched existing issues and read setup instructions.
+          required: true
+        - label: 我已去除密钥、个人信息和真实业务数据 / I removed credentials and private data.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: 项目版本或提交 / Version or commit
+      placeholder: v1.3.1，或完整commit SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境 / Environment
+      description: 操作系统、Python版本、原生/PyCharm/Docker启动方式。
+      placeholder: Windows 11，Python 3.12.10，PyCharm运行app.py
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: 出现问题的模式 / Mode
+      options:
+        - 离线规则演示 / demo
+        - 大模型实时分析 / live
+        - 安装或启动阶段 / setup
+        - 不确定 / unsure
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: 服务商与模型 / Provider and model
+      description: 仅实时模式需要；不要填写密钥或含凭据的地址。
+      placeholder: DeepSeek / deepseek-flash
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现 / Steps to reproduce
+      description: 依次写出操作、问题文本；需要数据时提供少量合成CSV。
+      placeholder: "1. 启动应用\n2. 上传合成CSV\n3. 提问……\n4. 观察……"
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 预期与实际结果 / Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 已脱敏日志 / Redacted logs
+      description: 可选；先去除密钥、个人路径和业务内容，不上传整个outputs目录。
+      render: shell

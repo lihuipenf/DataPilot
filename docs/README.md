@@ -16,6 +16,7 @@
 | 按模块理解代码 | [学习路线](learning-guide.md) |
 | 演示与简历描述 | [当前演示指南](demo-and-resume.md) |
 | 漏洞私下报告 | [SECURITY.md](../SECURITY.md) |
+| 使用帮助、Issue和PR入口 | [SUPPORT.md](../SUPPORT.md)、[维护流程](maintenance.md) |
 | 开源许可与贡献 | [MIT](../LICENSE)、[贡献说明](../CONTRIBUTING.md) |
 
 ## 历史记录

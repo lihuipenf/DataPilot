@@ -145,6 +145,10 @@ See [evaluation records](docs/evaluation.md) for actual results and limitations.
 
 Runtime datasets, state databases, keys, virtual environments and generated output directories are excluded from version control. Report vulnerabilities privately through the channel in [SECURITY.md](SECURITY.md).
 
+## Help and contributions
+
+Use [SUPPORT.md](SUPPORT.md) or the [issue chooser](https://github.com/lihuipenf/DataPilot/issues/new/choose) for Bug, Feature and Question forms. Report security issues privately via [SECURITY.md](SECURITY.md). Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a PR. This is a personally maintained project with no guaranteed response SLA.
+
 ## License
 
 Licensed under the [MIT License](LICENSE). Copyright (c) 2026 lihuipenf. Use, modification, distribution and commercial use are permitted with the copyright and permission notice retained. The software is provided as is, without warranty. Third-party dependencies and fonts retain their respective licenses.

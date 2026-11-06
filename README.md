@@ -217,6 +217,10 @@ GitHub Actions运行无密钥单元/集成测试、离线评测、依赖漏洞�
 
 本地 `.env`、业务数据、虚拟环境及运行产物不提交。安全漏洞请按 [SECURITY.md](SECURITY.md) 私下报告。参见 [v1.1设计与来源](docs/v1.1-plan.md)。
 
+## 获得帮助与参与
+
+安装、使用提问、缺陷和功能建议请从 [SUPPORT.md](SUPPORT.md) 选择入口；[Issue选择页](https://github.com/lihuipenf/DataPilot/issues/new/choose) 提供三类表单。安全漏洞按 [SECURITY.md](SECURITY.md) 私下报告。贡献前阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，维护分流与审阅约定见 [维护流程](docs/maintenance.md)。个人维护，无固定响应时限。
+
 ## 许可证
 
 本项目采用 [MIT License](LICENSE)，版权归 `2026 lihuipenf`。允许使用、修改、分发和商用；分发时须保留版权与许可声明。软件按原样提供，不作保证。第三方依赖及字体遵循各自许可证，本项目许可证不替代其条款。
